@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  h1{
+    text-align:center;
+  }
+
+select {
+    width: 100%;
+    padding: 16px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #f1f1f1;
+     font-size: 30px;
+}
+.grid-container {
+  display: grid;
+  grid-template-columns: auto auto auto auto auto;
+  background-color: #2196F3;
+  padding: 10px;
+}
+.grid-item {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  padding: 20px;
+  font-size: 30px;
+  text-align: center;
+}
+input[type=number] {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 0px 0;
+    box-sizing: border-box;
+}
+
+ .dot {
+      height: 25px;
+      width: 25px;
+      background-color: #bbb;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+
+//.grid-item:nth-child(even){background-color:green}
+
+</style>
+</head>
+<body>
+
+<h1>Let's Subtract Together</h1>
+<div>
+  <!--the selection form-->
+  <h2>Select a counter image</h2>
+  <select id='cars' onchange="setIcon()">
+   <option value='<span class="dot"></span>'>Dots</option>
+   <option value='<span>&#9748</span>'>umbrella</option>
+   <option value='<span>&#9749</span>'>Lion</option>
+   <option value='<span>&#9917</span>'>Ball</option>
+   <option value='<span>&#9962</span>'>House</option>
+   <option value='<span>&#9992</span>'>Aeroplane</option>
+   <option value='<span>&#9999</span>'>Pencil</option>
+   <option value='<span>&#10004</span>'>Ticks</option>
+   <option value='<span>&#10013</span>'>Cross</option>
+   <option value='<span>&#10084</span>'>Hearts</option>
+   <option value='<span>&#11014</span>'>Arrow Up</option>
+   <option value='<span>&#127758</span>'>Earth</option>
+   <option value='<span>&#127759</span>'>Earth</option>
+   <option value='<span>&#127764</span>'>Eclipses</option>
+   <option value='<span>&#12770</span>'>Moons</option>
+   <option value='<span>&#9962</span>'>Rainbow</option>
+  </select>
+ <!--end of the selection form-->
+
+</div>
+
+<div class="grid-container">
+</form>
+  <div class="grid-item"  id="ballBox"> <span class="dot"></span></div>
+  <div class="grid-item"  id="ballBox2"> <span class="dot"></span></div>
+  <div class="grid-item"  id="ballBox3">  <span class="dot"></span></div>   
+</div>
+
+
+<div class="grid-container">
+  <div class="grid-item"> <input id="nums" onfocusout="kidsAdd()" type="number" value="3"></div>
+  <div class="grid-item"> -</div>
+  <div class="grid-item">  <input id="nums2" onfocusout="kidsAdd2()" type="number"></div>   
+  <div class="grid-item">=</div>  
+  <div class="grid-item"><input id="nums3" onfocusout="kidsAdd3()" type="number"></div>  
+</div>
+
+
+<script>
+    let selectedIcon = "<span class='dot'></span>"
+    function setIcon(){
+    selectedIcon = document.getElementById("cars").value;
+     kidsAdd();
+     kidsAdd2()
+    }
+
+
+
+    function kidsAdd() {
+      let num = parseInt(document.getElementById("nums").value)
+      let ballbox = document.getElementById("ballBox");
+      ballbox.innerHTML = "";
+      for (let i = 0; i < num; i++) {
+        ballbox.innerHTML += selectedIcon;
+      }
+    }
+
+
+    function kidsAdd2() {
+      let num = parseInt(document.getElementById("nums2").value)
+      let ballbox = document.getElementById("ballBox2");
+      ballbox.innerHTML = "";
+      for (let i = 0; i < num; i++) {
+            ballbox.innerHTML += selectedIcon;
+      }
+      add();
+    }
+
+
+    function add() {
+      let num1 = document.getElementById("nums").value;
+      let num2 = document.getElementById("nums2").value;
+      let num3 =document.getElementById("nums3");
+      num3.value = parseInt(num1) - parseInt(num2);
+
+      let ballbox = document.getElementById("ballBox3");
+      ballbox.innerHTML = "";
+      for (let i = 0; i < parseInt(num3.value); i++) {
+            ballbox.innerHTML += selectedIcon;
+      }
+    }
+</script>
+</body>
+
+</html>

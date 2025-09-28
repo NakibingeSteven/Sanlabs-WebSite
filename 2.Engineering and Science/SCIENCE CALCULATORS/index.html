@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            height: 100vh;
+        }
+
+        .header {
+            margin: 20px 0;
+            width: 100%;
+            background-color: #1f1f1f;
+            color: #e0e0e0;
+            padding: 20px;
+            border-bottom: 5px solid #333;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 36px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .section {
+            margin: 20px 0;
+        }
+
+        .section h2 {
+            color: #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            text-align: center;
+            max-width: 300px;
+            width: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: #e0e0e0;
+        }
+
+        .card a {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        .card a:hover {
+            background: linear-gradient(135deg, #388e3c, #2c6e2f);
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .cards {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>SN Labs Calculators</h1>
+    </div>
+
+    <div class="container">
+        <!-- Resistors Section -->
+        <div class="section">
+            <h2>Resistors</h2>
+            <div class="cards">
+                <div class="card">
+                    <h3>Series Resistor Calculator</h3>
+                    <a href="series_resistor_calculator.html">Go to Calculator</a>
+                </div>
+                <div class="card">
+                    <h3>Parallel Resistor Calculator</h3>
+                    <a href="parallel_resistor_calculator.html">Go to Calculator</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Capacitors Section -->
+        <div class="section">
+            <h2>Capacitors</h2>
+            <div class="cards">
+                <div class="card">
+                    <h3>Series Capacitor Calculator</h3>
+                    <a href="series_capacitor_calculator.html">Go to Calculator</a>
+                </div>
+                <div class="card">
+                    <h3>Parallel Capacitor Calculator</h3>
+                    <a href="parallel_capacitor_calculator.html">Go to Calculator</a>
+                </div>
+                <div class="card">
+                    <h3>Capacitive Reactance Calculator</h3>
+                    <a href="capacitive_reactance_calculator.html">Go to Calculator</a>
+                </div>
+                <div class="card">
+                    <h3>Capacitive Admittance Calculator</h3>
+                    <a href="capacitive_admittance_calculator.html">Go to Calculator</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inductors Section -->
+        <div class="section">
+            <h2>Inductors</h2>
+            <div class="cards">
+                <div class="card">
+                    <h3>Series Inductor Calculator</h3>
+                    <a href="series_inductor_calculator.html">Go to Calculator</a>
+                </div>
+                <div class="card">
+                    <h3>Parallel Inductor Calculator</h3>
+                    <a href="parallel_inductor_calculator.html">Go to Calculator</a>
+                </div>
+                <div class="card">
+                    <h3>Inductive Reactance Calculator</h3>
+                    <a href="inductive_reactance_calculator.html">Go to Calculator</a>
+                </div>
+                <div class="card">
+                    <h3>Inductive Admittance Calculator</h3>
+                    <a href="inductive_admittance_calculator.html">Go to Calculator</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battery Life Section -->
+        <div class="section">
+            <h2>Battery Life</h2>
+            <div class="cards">
+                <div class="card">
+                    <h3>Battery Life Calculator</h3>
+                    <a href="battery_life_calculator.html">Go to Calculator</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>States of Matter Simulation</title>
+<link rel="stylesheet" href="./../">
+</head>
+<body>
+
+  <h1>States of Matter Simulation</h1>
+
+  <!-- Control Sliders and Inputs -->
+  <div class="controls">
+    <div class="control-item">
+      <label for="solidAmplitude">Solid Vibration Amplitude:</label>
+      <input type="range" id="solidAmplitude" min="0.5" max="5" step="0.1" value="1.5" oninput="updateControlVariables()">
+    </div>
+    <div class="control-item">
+      <label for="meltingPoint">Melting Point (°C):</label>
+      <input type="number" id="meltingPoint" min="0" max="100" value="50" oninput="updatePhaseChanges()">
+    </div>
+    <div class="control-item">
+      <label for="liquidMotion">Liquid Random Motion:</label>
+      <input type="range" id="liquidMotion" min="0.5" max="5" step="0.1" value="1.5" oninput="updateControlVariables()">
+    </div>
+    <div class="control-item">
+      <label for="boilingPoint">Boiling Point (°C):</label>
+      <input type="number" id="boilingPoint" min="0" max="100" value="80" oninput="updatePhaseChanges()">
+    </div>
+    <div class="control-item">
+      <label for="gasSpeed">Gas Speed Multiplier:</label>
+      <input type="range" id="gasSpeed" min="1" max="10" step="1" value="5" oninput="updateControlVariables()">
+    </div>
+    <div class="control-item">
+      <label for="temperature">Temperature (°C):</label>
+      <input type="range" id="temperature" min="0" max="100" step="1" value="50" oninput="updateTemperature()">
+      <!-- Temperature display -->
+      <div class="temperature-display">Current Temperature: <span id="temperatureValue">50</span>°C</div>
+    </div>
+  </div>
+
+  <!-- Single Canvas and Dynamic Label -->
+  <div class="canvas-container">
+    <canvas id="matterCanvas" width="300" height="300"></canvas>
+    <div id="stateLabel" class="label">Solids</div>
+  </div>
+
+  <!-- Particle Counts -->
+  <div class="particle-counts">
+    <div>Solids: <span id="solidCount">50</span></div>
+    <div>Liquids: <span id="liquidCount">0</span></div>
+    <div>Gases: <span id="gasCount">0</span></div>
+  </div>
+
+  <!-- Buttons for Play, Stop, and Reset -->
+  <div class="buttons">
+    <button id="playButton" onclick="playSimulation()">Play</button>
+    <button id="stopButton" onclick="stopSimulation()" disabled>Stop</button>
+    <button id="resetButton" onclick="resetSimulation()">Reset</button>
+  </div>
+
+  <script>
+    let animationId;  // Stores the requestAnimationFrame ID for stopping
+    let isPlaying = false;  // To track if the simulation is currently playing
+    let currentState = 'solid';  // Keeps track of the current state of matter
+
+    // Ball class to create particles
+    class Ball {
+      constructor(radius = 5, color = '#ff0000') {
+        this.radius = radius;
+        this.color = color;
+        this.x = 0;
+        this.y = 0;
+        this.vx = 0;
+        this.vy = 0;
+        this.state = 'solid';  // Initial state is solid
+      }
+
+      draw(context) {
+        let grad = context.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(1, this.color);
+        context.fillStyle = grad;
+        context.beginPath();
+        context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, true);
+        context.closePath();
+        context.fill();
+      }
+    }
+
+    // Motion control variables
+    let solidVibrationAmplitude = 1.5; // Controls vibration for solids
+    let liquidRandomMotion = 1.5; // Controls random movement for liquids
+    let gasSpeedMultiplier = 5; // Controls speed for gases
+    let gravity = 0.05; // Controls gravity for liquids
+    let particleCount = 50;
+    let temperature = 50;
+    let meltingPoint = 50;  // Melting point
+    let boilingPoint = 80;  // Boiling point
+
+    // Particle array
+    let particles = [];
+
+    // Canvas and context
+    const canvas = document.getElementById('matterCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Initialize particles
+    function initializeParticles() {
+      particles = createParticles(particleCount);
+      updateCounts();
+      updateStateLabel();
+    }
+
+    // Update control variables based on sliders
+    function updateControlVariables() {
+      solidVibrationAmplitude = parseFloat(document.getElementById('solidAmplitude').value);
+      liquidRandomMotion = parseFloat(document.getElementById('liquidMotion').value);
+      gasSpeedMultiplier = parseFloat(document.getElementById('gasSpeed').value);
+      particles.forEach(p => {
+        if (p.state === 'gas') {
+          p.vx = (Math.random() - 0.5) * gasSpeedMultiplier;
+          p.vy = (Math.random() - 0.5) * gasSpeedMultiplier;
+        }
+      });
+    }
+
+    // Update temperature and handle phase changes
+    function updateTemperature() {
+      temperature = parseInt(document.getElementById('temperature').value);
+      document.getElementById('temperatureValue').innerText = temperature;  // Update the displayed temperature value
+      updatePhaseChanges();
+    }
+
+    // Gradual phase transition based on particle state
+    function updatePhaseChanges() {
+      meltingPoint = parseInt(document.getElementById('meltingPoint').value);
+      boilingPoint = parseInt(document.getElementById('boilingPoint').value);
+
+      particles.forEach(p => {
+        // Gradually transition from solid to liquid
+        if (temperature >= meltingPoint && p.state === 'solid') {
+          p.state = 'liquid';
+          p.color = '#00f'; // Change color to blue for liquids
+          p.vx = 0;
+          p.vy = 0;
+        }
+
+        // Gradually transition from liquid to gas
+        if (temperature >= boilingPoint && p.state === 'liquid') {
+          p.state = 'gas';
+          p.color = '#0f0'; // Change color to green for gases
+          p.vx = (Math.random() - 0.5) * gasSpeedMultiplier;
+          p.vy = (Math.random() - 0.5) * gasSpeedMultiplier;
+        }
+
+        // If temperature decreases, transition back
+        if (temperature < boilingPoint && p.state === 'gas') {
+          p.state = 'liquid';
+          p.color = '#00f'; // Back to blue for liquids
+          p.vx = 0;
+          p.vy = 0;
+        }
+
+        if (temperature < meltingPoint && p.state === 'liquid') {
+          p.state = 'solid';
+          p.color = '#f00'; // Back to red for solids
+        }
+      });
+
+      updateCounts();
+      updateStateLabel();
+    }
+
+    // Create particles
+    function createParticles(numParticles) {
+      const particles = [];
+      for (let i = 0; i < numParticles; i++) {
+        const particle = new Ball(Math.random() * 3 + 2, '#f00'); // Red for solids
+        particle.x = Math.random() * canvas.width;
+        particle.y = Math.random() * canvas.height;
+        particles.push(particle);
+      }
+      return particles;
+    }
+
+    // Update and draw particles based on the current state
+    function updateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the canvas
+
+      particles.forEach(p => {
+        // Solids: Particles vibrate in place
+        if (p.state === 'solid') {
+          p.x += Math.sin(Date.now() * 0.005) * solidVibrationAmplitude;
+          p.y += Math.cos(Date.now() * 0.005) * solidVibrationAmplitude;
+        }
+
+        // Liquids: Particles move randomly
+        if (p.state === 'liquid') {
+          p.x += (Math.random() - 0.5) * liquidRandomMotion;
+          p.y += (Math.random() - 0.5) * liquidRandomMotion;
+          p.vy += gravity;  // Apply gravity to liquids
+
+          if (p.y + p.radius > canvas.height) {
+            p.y = canvas.height - p.radius;
+            p.vy = -p.vy * 0.5;  // Dampen the velocity
+          }
+          p.y += p.vy;
+        }
+
+        // Gases: Particles move quickly and bounce off walls
+        if (p.state === 'gas') {
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x + p.radius > canvas.width || p.x - p.radius < 0) p.vx *= -1;
+          if (p.y + p.radius > canvas.height || p.y - p.radius < 0) p.vy *= -1;
+        }
+
+        p.draw(ctx);
+      });
+    }
+
+    // Update particle counts for each state
+    function updateCounts() {
+      const solidCount = particles.filter(p => p.state === 'solid').length;
+      const liquidCount = particles.filter(p => p.state === 'liquid').length;
+      const gasCount = particles.filter(p => p.state === 'gas').length;
+
+      document.getElementById('solidCount').innerText = solidCount;
+      document.getElementById('liquidCount').innerText = liquidCount;
+      document.getElementById('gasCount').innerText = gasCount;
+    }
+
+    // Update the label to reflect the current state
+    function updateStateLabel() {
+      const label = document.getElementById('stateLabel');
+      label.innerText = temperature >= boilingPoint ? 'Gases' : temperature >= meltingPoint ? 'Liquids' : 'Solids';
+    }
+
+    // Main animation loop
+    function animate() {
+      updateParticles();
+      animationId = requestAnimationFrame(animate);
+    }
+
+    // Play the simulation
+    function playSimulation() {
+      if (!isPlaying) {
+        isPlaying = true;
+        animationId = requestAnimationFrame(animate);
+        document.getElementById('playButton').disabled = true;
+        document.getElementById('stopButton').disabled = false;
+      }
+    }
+
+    // Stop the simulation
+    function stopSimulation() {
+      if (isPlaying) {
+        cancelAnimationFrame(animationId);
+        isPlaying = false;
+        document.getElementById('playButton').disabled = false;
+        document.getElementById('stopButton').disabled = true;
+      }
+    }
+
+    // Reset the simulation
+    function resetSimulation() {
+      stopSimulation();
+      initializeParticles();
+      playSimulation();
+    }
+
+    // Initialize the simulation
+    initializeParticles();
+  </script>
+
+</body>
+</html>

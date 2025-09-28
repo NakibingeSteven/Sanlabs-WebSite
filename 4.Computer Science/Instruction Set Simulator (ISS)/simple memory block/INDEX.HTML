@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Block Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .memory-block {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .memory-cell {
+            width: 80px;
+            height: 40px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .memory-cell:hover {
+            background-color: #e0e0e0;
+        }
+
+        .memory-select {
+            margin-left: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            width: 200px;
+        }
+
+        .memory-select h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .memory-select p {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="memory-block">
+        <div class="memory-cell" id="cell0">Cell 0</div>
+        <div class="memory-cell" id="cell1">Cell 1</div>
+        <div class="memory-cell" id="cell2">Cell 2</div>
+        <!-- Add more cells as needed -->
+    </div>
+    <div class="memory-select">
+        <h2>Memory Select</h2>
+        <p id="memory-address">Memory Address: </p>
+        <p id="memory-value">Memory Value: </p>
+    </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const cells = document.querySelectorAll('.memory-cell');
+    const memoryAddressDisplay = document.getElementById('memory-address');
+    const memoryValueDisplay = document.getElementById('memory-value');
+
+    cells.forEach(cell => {
+        cell.addEventListener('click', function() {
+            // Get memory address from cell ID
+            let memoryAddress = this.id.replace('cell', '');
+            
+            // Simulate getting memory value (can be replaced with actual logic)
+            let memoryValue = 'Value at ' + memoryAddress;
+
+            // Display memory address and value
+            memoryAddressDisplay.textContent = 'Memory Address: ' + memoryAddress;
+            memoryValueDisplay.textContent = 'Memory Value: ' + memoryValue;
+        });
+    });
+});
+
+  </script>
+</body>
+
+</html>

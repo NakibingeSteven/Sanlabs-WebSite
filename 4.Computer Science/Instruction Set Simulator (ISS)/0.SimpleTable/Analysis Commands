@@ -1,0 +1,11 @@
+# Calculate the sum of values from cell 0 to cell 5
+13 0 5
+
+# Calculate the average of values from cell 6 to cell 8
+14 6 8
+
+# Find the maximum value in all cells
+15
+
+# Find the minimum value in all cells
+16

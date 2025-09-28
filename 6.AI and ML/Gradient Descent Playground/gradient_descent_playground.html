@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Loss Landscape - Interactive 4D Explorer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00d4ff;
+            --primary-dark: #0099cc;
+            --secondary: #ff6b35;
+            --accent: #7b68ee;
+            --success: #00ff87;
+            --warning: #ffb347;
+            --danger: #ff4757;
+            --dark: #0a0e27;
+            --dark-light: #1a1e37;
+            --dark-lighter: #2a2e47;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c6db;
+            --text-muted: #8892b0;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-hover: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, #0f1419 50%, #1a0033 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 100vw;
+            margin: 0 auto;
+            padding: 8px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            background: linear-gradient(45deg, var(--primary), var(--accent), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .warning-banner {
+            background: linear-gradient(135deg, var(--secondary), var(--danger));
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .warning-banner strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+
+        .main-layout {
+            display: grid;
+            gap: 12px;
+            height: calc(100vh - 140px);
+        }
+
+        /* Desktop Layout */
+        @media (min-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 280px 1fr 280px;
+                grid-template-rows: 1fr;
+            }
+            .container { padding: 16px; }
+        }
+
+        /* Tablet Layout */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .main-layout {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            .center-panel { grid-column: 1 / -1; }
+            .left-panel { grid-row: 2; }
+            .right-panel { grid-row: 2; }
+        }
+
+        /* Mobile Layout */
+        @media (max-width: 767px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+            }
+            .center-panel { 
+                order: 1; 
+                height: 60vh;
+                min-height: 400px;
+            }
+            .left-panel { order: 2; }
+            .right-panel { order: 3; }
+        }
+
+        .panel {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .panel-content {
+            padding: 16px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .center-panel .panel-content {
+            padding: 12px;
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+        }
+
+        .info-card.highlight {
+            border-color: var(--warning);
+            background: rgba(255, 179, 71, 0.1);
+        }
+
+        .info-card.success {
+            border-color: var(--success);
+            background: rgba(0, 255, 135, 0.1);
+        }
+
+        .crosssection-controls {
+            background: var(--glass-hover);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .crosssection-controls h4 {
+            color: var(--warning);
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .param-control {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .param-value {
+            background: var(--dark);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--primary);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            background: var(--glass);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .range-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--dark-light);
+            outline: none;
+            accent-color: var(--primary);
+        }
+
+        .range-value {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 3px;
+            width: calc(100% - 6px);
+            backdrop-filter: blur(10px);
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, var(--success), #00cc6a);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, var(--warning), #ff9500);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, var(--danger), #ff3838);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--glass);
+            color: var(--text-primary);
+            border-color: var(--glass-border);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .optimizer-card {
+            background: var(--glass);
+            border: 2px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .optimizer-card:hover {
+            background: var(--glass-hover);
+        }
+
+        .optimizer-card.active {
+            border-color: var(--success);
+            background: rgba(0, 255, 135, 0.1);
+        }
+
+        .optimizer-card.running {
+            border-color: var(--primary);
+            background: rgba(0, 212, 255, 0.1);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .optimizer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .optimizer-header strong {
+            font-size: 0.9rem;
+        }
+
+        .optimizer-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .optimizer-params {
+            display: none;
+        }
+
+        .optimizer-card.active .optimizer-params {
+            display: block;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .metric-card {
+            background: var(--glass);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .metric-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary);
+            font-family: monospace;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            margin-top: 2px;
+        }
+
+        #threejs-container {
+            width: 100%;
+            height: calc(100% - 80px);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            background: radial-gradient(ellipse at center, #0a0e27 0%, #000511 100%);
+        }
+
+        .view-controls {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--glass);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .view-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            background: var(--glass);
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .view-btn:hover {
+            background: var(--glass-hover);
+        }
+
+        .view-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .status-bar {
+            background: var(--glass);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-container {
+            background: var(--glass);
+            border-radius: 10px;
+            padding: 12px;
+            height: 180px;
+            margin-bottom: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 8px;
+            background: var(--glass);
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .surface-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--warning);
+            color: var(--dark);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            display: none;
+            z-index: 10;
+        }
+
+        .surface-indicator.active {
+            display: block;
+            animation: fadeInOut 1s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            20%, 80% { opacity: 1; }
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .data-point {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            padding: 6px;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .collapsible::after {
+            content: ' ▼';
+            font-size: 0.8em;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible.collapsed + .collapsible-content {
+            max-height: 0;
+        }
+
+        /* Mobile-specific improvements */
+        @media (max-width: 767px) {
+            .form-group {
+                margin-bottom: 10px;
+            }
+            
+            .optimizer-card {
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .chart-container {
+                height: 150px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--glass-border);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Neural Network Loss Landscape Explorer</h1>
+            <div class="warning-banner">
+                <strong>Interactive 4D Parameter Space</strong>
+                Navigate through cross-sections of 4D space (w₁, b₁, w₂, b₂) with manual controls and dynamic optimization visualization.
+            </div>
+        </div>
+        
+        <div class="main-layout">
+            <!-- Left Panel: Configuration -->
+            <div class="panel left-panel">
+                <div class="panel-content">
+                    <div class="section-title">🧠 Neural Network</div>
+                    <div class="info-card">
+                        <strong>Architecture:</strong> y = w₂ * σ(w₁ * x + b₁) + b₂<br>
+                        <em>Single hidden neuron with sigmoid activation</em>
+                    </div>
+
+                    <div class="crosssection-controls">
+                        <h4>🎚️ Cross-Section Control</h4>
+                        <div class="param-control">
+                            <div>
+                                <label>w₂ (Output Weight)</label>
+                                <input type="range" id="manualW2" class="range-slider" min="-3" max="3" step="0.1" value="1">
+                            </div>
+                            <div class="param-value" id="manualW2Value">1.0</div>
+                        </div>
+                        <div class="param-control">
+                            <div>
+                                <label>b₂ (Output Bias)</label>
+                                <input type="range" id="manualB2" class="range-slider" min="-2" max="2" step="0.1" value="0">
+                            </div>
+                            <div class="param-value" id="manualB2Value">0.0</div>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <button class="btn btn-secondary" onclick="followOptimizers()" style="flex: 1;">📍 Follow</button>
+                            <button class="btn btn-secondary" onclick="lockCrossSection()" style="flex: 1;">🔒 Lock</button>
+                        </div>
+                    </div>
+
+                    <div class="section-title collapsible">📊 Training Data</div>
+                    <div class="collapsible-content">
+                        <div class="form-group">
+                            <label>Target Function</label>
+                            <select id="targetFunction" class="form-control">
+                                <option value="linear">Linear: y = 2x</option>
+                                <option value="quadratic">Quadratic: y = x²</option>
+                                <option value="sine">Sine: y = sin(2x)</option>
+                                <option value="step">Step Function</option>
+                                <option value="multimodal">Multi-Modal (Challenging)</option>
+                                <option value="rastrigin">Rastrigin-like (Very Hard)</option>
+                                <option value="rosenbrock">Rosenbrock Valley</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Data Points</label>
+                            <input type="range" id="dataPoints" class="range-slider" min="5" max="25" value="12">
+                            <div class="range-value" id="dataPointsValue">12</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Noise Level</label>
+                            <input type="range" id="noiseLevel" class="range-slider" min="0" max="0.3" step="0.02" value="0.08">
+                            <div class="range-value" id="noiseLevelValue">0.08</div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="generateData()">🎲 Generate Data</button>
+
+                        <div class="data-grid" id="dataPointsDisplay"></div>
+                    </div>
+
+                    <div class="section-title collapsible">⚙️ Visualization</div>
+                    <div class="collapsible-content">
+                        <div class="form-group">
+                            <label>Parameter Range (w₁, b₁)</label>
+                            <input type="range" id="paramRange" class="range-slider" min="2" max="6" step="0.5" value="4">
+                            <div class="range-value" id="paramRangeValue">±4</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Surface Resolution</label>
+                            <input type="range" id="resolution" class="range-slider" min="25" max="60" value="35">
+                            <div class="range-value" id="resolutionValue">35</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Update Frequency</label>
+                            <input type="range" id="updateRate" class="range-slider" min="1" max="15" value="4">
+                            <div class="range-value" id="updateRateValue">Every 4 steps</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: 3D Visualization -->
+            <div class="panel center-panel">
+                <div class="panel-content">
+                    <div class="surface-indicator" id="surfaceIndicator">Surface Updated</div>
+                    
+                    <div class="view-controls">
+                        <button class="view-btn active" data-view="surface">🏔️ Surface</button>
+                        <button class="view-btn" data-view="contour">🗺️ Contour</button>
+                        <button class="view-btn" data-view="both">🌐 Both</button>
+                        <button class="view-btn" data-view="wireframe">📐 Wireframe</button>
+                    </div>
+                    
+                    <div class="status-bar" id="statusBar">
+                        Configure settings and select optimizers to begin exploration
+                    </div>
+                    
+                    <div id="threejs-container"></div>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ff4757;"></div>
+                            <span>SGD</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #00ff87;"></div>
+                            <span>Adam</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3742fa;"></div>
+                            <span>RMSprop</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffb347;"></div>
+                            <span>Momentum</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Optimizers -->
+            <div class="panel right-panel">
+                <div class="panel-content">
+                    <div class="section-title">🚀 Optimizers</div>
+                    
+                    <div class="optimizer-card" data-optimizer="sgd">
+                        <div class="optimizer-header">
+                            <strong>SGD</strong>
+                            <input type="checkbox" class="optimizer-checkbox">
+                        </div>
+                        <div class="optimizer-desc">Classic gradient descent</div>
+                        <div class="optimizer-params">
+                            <div class="form-group">
+                                <label>Learning Rate</label>
+                                <input type="range" id="sgdLR" class="range-slider" min="0.001" max="0.3" step="0.001" value="0.05">
+                                <div class="range-value" id="sgdLRValue">0.05</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="optimizer-card" data-optimizer="momentum">
+                        <div class="optimizer-header">
+                            <strong>SGD + Momentum</strong>
+                            <input type="checkbox" class="optimizer-checkbox">
+                        </div>
+                        <div class="optimizer-desc">Accelerated gradient descent</div>
+                        <div class="optimizer-params">
+                            <div class="form-group">
+                                <label>Learning Rate</label>
+                                <input type="range" id="momentumLR" class="range-slider" min="0.001" max="0.3" step="0.001" value="0.05">
+                                <div class="range-value" id="momentumLRValue">0.05</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Momentum (β)</label>
+                                <input type="range" id="momentumBeta" class="range-slider" min="0" max="0.99" step="0.01" value="0.9">
+                                <div class="range-value" id="momentumBetaValue">0.9</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="optimizer-card active" data-optimizer="adam">
+                        <div class="optimizer-header">
+                            <strong>Adam</strong>
+                            <input type="checkbox" class="optimizer-checkbox" checked>
+                        </div>
+                        <div class="optimizer-desc">Adaptive moment estimation</div>
+                        <div class="optimizer-params">
+                            <div class="form-group">
+                                <label>Learning Rate</label>
+                                <input type="range" id="adamLR" class="range-slider" min="0.001" max="0.3" step="0.001" value="0.05">
+                                <div class="range-value" id="adamLRValue">0.05</div>
+                            </div>
+                            <div class="form-group">
+                                <label>β₁</label>
+                                <input type="range" id="adamBeta1" class="range-slider" min="0.8" max="0.999" step="0.001" value="0.9">
+                                <div class="range-value" id="adamBeta1Value">0.9</div>
+                            </div>
+                            <div class="form-group">
+                                <label>β₂</label>
+                                <input type="range" id="adamBeta2" class="range-slider" min="0.9" max="0.9999" step="0.0001" value="0.999">
+                                <div class="range-value" id="adamBeta2Value">0.999</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="optimizer-card" data-optimizer="rmsprop">
+                        <div class="optimizer-header">
+                            <strong>RMSprop</strong>
+                            <input type="checkbox" class="optimizer-checkbox">
+                        </div>
+                        <div class="optimizer-desc">Root mean square propagation</div>
+                        <div class="optimizer-params">
+                            <div class="form-group">
+                                <label>Learning Rate</label>
+                                <input type="range" id="rmspropLR" class="range-slider" min="0.001" max="0.3" step="0.001" value="0.05">
+                                <div class="range-value" id="rmspropLRValue">0.05</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Decay Rate (ρ)</label>
+                                <input type="range" id="rmspropDecay" class="range-slider" min="0.8" max="0.999" step="0.001" value="0.9">
+                                <div class="range-value" id="rmspropDecayValue">0.9</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">🎮 Controls</div>
+                    <button class="btn btn-success" onclick="startOptimization()">▶️ Start Training</button>
+                    <button class="btn btn-danger" onclick="stopOptimization()">⏹️ Stop Training</button>
+                    <button class="btn btn-warning" onclick="resetOptimizers()">🔄 Reset</button>
+
+                    <div class="section-title">📊 Current Parameters</div>
+                    <div class="info-card success">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div>
+                                <label>w₁</label>
+                                <input type="text" id="w1Display" class="form-control" readonly>
+                            </div>
+                            <div>
+                                <label>b₁</label>
+                                <input type="text" id="b1Display" class="form-control" readonly>
+                            </div>
+                            <div>
+                                <label>w₂</label>
+                                <input type="text" id="w2Display" class="form-control" readonly>
+                            </div>
+                            <div>
+                                <label>b₂</label>
+                                <input type="text" id="b2Display" class="form-control" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">📈 Metrics</div>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value" id="stepCount">0</div>
+                            <div class="metric-label">Steps</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="currentLoss">-</div>
+                            <div class="metric-label">Loss</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="bestLoss">-</div>
+                            <div class="metric-label">Best</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="surfaceUpdates">0</div>
+                            <div class="metric-label">Updates</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="lossChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer;
+        let lossSurface, contourMesh, wireframeMesh;
+        let optimizers = {};
+        let isTraining = false;
+        let trainingData = [];
+        let stepCount = 0;
+        let surfaceUpdateCount = 0;
+        let lossChart;
+        let animationId;
+        let bestLoss = Infinity;
+        let isLocked = false;
+        let followMode = true;
+
+        // Camera control variables
+        let mouseDown = false;
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0.3, targetRotationY = 0.8;
+        let rotationX = 0.3, rotationY = 0.8;
+
+        // Current view mode
+        let currentView = 'surface';
+
+        // Cross-section parameters
+        let manualW2 = 1.0, manualB2 = 0.0;
+        let needsSurfaceUpdate = true;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initThreeJS();
+            initUI();
+            generateData();
+            buildLossSurface();
+            initChart();
+            animate();
+        });
+
+        function initThreeJS() {
+            const container = document.getElementById('threejs-container');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x030712);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(5, 4, 5);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild(renderer.domElement);
+
+            // Lighting setup
+            const ambientLight = new THREE.AmbientLight(0x404080, 0.4);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(8, 10, 4);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+
+            // Atmospheric lights
+            const light1 = new THREE.PointLight(0x00d4ff, 0.3, 30);
+            light1.position.set(8, 8, 8);
+            scene.add(light1);
+
+            const light2 = new THREE.PointLight(0xff6b35, 0.2, 25);
+            light2.position.set(-6, 4, -6);
+            scene.add(light2);
+
+            const light3 = new THREE.PointLight(0x7b68ee, 0.25, 20);
+            light3.position.set(0, 12, 0);
+            scene.add(light3);
+
+            // Mouse controls
+            container.addEventListener('mousedown', onMouseDown);
+            container.addEventListener('mousemove', onMouseMove);
+            container.addEventListener('mouseup', onMouseUp);
+            container.addEventListener('wheel', onMouseWheel);
+            
+            // Touch controls for mobile
+            container.addEventListener('touchstart', onTouchStart, { passive: false });
+            container.addEventListener('touchmove', onTouchMove, { passive: false });
+            container.addEventListener('touchend', onTouchEnd);
+
+            // Add subtle grid
+            const gridHelper = new THREE.GridHelper(8, 16, 0x1a2332, 0x0f1419);
+            gridHelper.rotateX(Math.PI / 2);
+            gridHelper.position.z = -0.1;
+            scene.add(gridHelper);
+
+            // Add axis labels
+            addAxisLabels();
+        }
+
+        let lastTouchX = 0, lastTouchY = 0;
+
+        function onTouchStart(event) {
+            event.preventDefault();
+            if (event.touches.length === 1) {
+                mouseDown = true;
+                lastTouchX = event.touches[0].clientX;
+                lastTouchY = event.touches[0].clientY;
+            }
+        }
+
+        function onTouchMove(event) {
+            event.preventDefault();
+            if (!mouseDown || event.touches.length !== 1) return;
+            
+            const deltaX = event.touches[0].clientX - lastTouchX;
+            const deltaY = event.touches[0].clientY - lastTouchY;
+            
+            targetRotationY += deltaX * 0.01;
+            targetRotationX += deltaY * 0.01;
+            targetRotationX = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, targetRotationX));
+            
+            lastTouchX = event.touches[0].clientX;
+            lastTouchY = event.touches[0].clientY;
+        }
+
+        function onTouchEnd() {
+            mouseDown = false;
+        }
+
+        function addAxisLabels() {
+            const loader = new THREE.FontLoader();
+            // Simple text sprites for axis labels
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 64;
+            canvas.height = 32;
+            
+            // Create axis indicators with simple geometry
+            const axisGeometry = new THREE.ConeGeometry(0.05, 0.2, 8);
+            
+            // X-axis (w1) - Red
+            const xAxisMaterial = new THREE.MeshBasicMaterial({ color: 0xff6b6b });
+            const xArrow = new THREE.Mesh(axisGeometry, xAxisMaterial);
+            xArrow.position.set(3, 0, 0);
+            xArrow.rotateZ(-Math.PI/2);
+            scene.add(xArrow);
+            
+            // Y-axis (b1) - Green  
+            const yAxisMaterial = new THREE.MeshBasicMaterial({ color: 0x51cf66 });
+            const yArrow = new THREE.Mesh(axisGeometry, yAxisMaterial);
+            yArrow.position.set(0, 3, 0);
+            scene.add(yArrow);
+            
+            // Z-axis (Loss) - Blue
+            const zAxisMaterial = new THREE.MeshBasicMaterial({ color: 0x339af0 });
+            const zArrow = new THREE.Mesh(axisGeometry, zAxisMaterial);
+            zArrow.position.set(0, 0, 3);
+            scene.add(zArrow);
+        }
+
+        function onMouseDown(event) {
+            mouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+
+        function onMouseMove(event) {
+            if (!mouseDown) return;
+            
+            const deltaX = event.clientX - mouseX;
+            const deltaY = event.clientY - mouseY;
+            
+            targetRotationY += deltaX * 0.008;
+            targetRotationX += deltaY * 0.008;
+            targetRotationX = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, targetRotationX));
+            
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+
+        function onMouseUp() {
+            mouseDown = false;
+        }
+
+        function onMouseWheel(event) {
+            event.preventDefault();
+            const scale = event.deltaY > 0 ? 1.08 : 0.92;
+            const newDistance = camera.position.length() * scale;
+            const clampedDistance = Math.max(2, Math.min(15, newDistance));
+            
+            const direction = camera.position.clone().normalize();
+            camera.position.copy(direction.multiplyScalar(clampedDistance));
+        }
+
+        function updateCamera() {
+            rotationX += (targetRotationX - rotationX) * 0.08;
+            rotationY += (targetRotationY - rotationY) * 0.08;
+            
+            const distance = camera.position.length();
+            camera.position.x = distance * Math.cos(rotationY) * Math.cos(rotationX);
+            camera.position.y = distance * Math.sin(rotationX);
+            camera.position.z = distance * Math.sin(rotationY) * Math.cos(rotationX);
+            
+            camera.lookAt(0, 0, 0);
+        }
+
+        function initUI() {
+            // Range sliders with improved handling
+            const sliders = {
+                'dataPoints': 'dataPointsValue',
+                'noiseLevel': 'noiseLevelValue', 
+                'paramRange': 'paramRangeValue',
+                'resolution': 'resolutionValue',
+                'updateRate': 'updateRateValue',
+                'manualW2': 'manualW2Value',
+                'manualB2': 'manualB2Value',
+                'sgdLR': 'sgdLRValue',
+                'momentumLR': 'momentumLRValue',
+                'momentumBeta': 'momentumBetaValue',
+                'adamLR': 'adamLRValue',
+                'adamBeta1': 'adamBeta1Value',
+                'adamBeta2': 'adamBeta2Value',
+                'rmspropLR': 'rmspropLRValue',
+                'rmspropDecay': 'rmspropDecayValue'
+            };
+            
+            Object.entries(sliders).forEach(([sliderId, valueId]) => {
+                const slider = document.getElementById(sliderId);
+                const valueDisplay = document.getElementById(valueId);
+                
+                if (slider && valueDisplay) {
+                    const updateValue = () => {
+                        const value = parseFloat(slider.value);
+                        if (sliderId === 'paramRange') {
+                            valueDisplay.textContent = '±' + value;
+                        } else if (sliderId === 'updateRate') {
+                            valueDisplay.textContent = 'Every ' + value + ' steps';
+                        } else if (sliderId === 'manualW2' || sliderId === 'manualB2') {
+                            valueDisplay.textContent = value.toFixed(1);
+                            if (sliderId === 'manualW2') manualW2 = value;
+                            if (sliderId === 'manualB2') manualB2 = value;
+                            if (!followMode) needsSurfaceUpdate = true;
+                        } else {
+                            valueDisplay.textContent = value.toFixed(3);
+                        }
+                    };
+                    
+                    slider.addEventListener('input', updateValue);
+                    updateValue(); // Initial value
+                }
+            });
+
+            // Optimizer cards
+            document.querySelectorAll('.optimizer-card').forEach(card => {
+                const checkbox = card.querySelector('.optimizer-checkbox');
+                
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+
+                if (checkbox.checked) {
+                    card.classList.add('active');
+                }
+            });
+
+            // View controls
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentView = this.dataset.view;
+                    updateVisualization();
+                });
+            });
+
+            // Collapsible sections
+            document.querySelectorAll('.collapsible').forEach(element => {
+                element.addEventListener('click', function() {
+                    this.classList.toggle('collapsed');
+                    const content = this.nextElementSibling;
+                    if (this.classList.contains('collapsed')) {
+                        content.style.maxHeight = '0px';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                    }
+                });
+            });
+
+            // Target function change
+            document.getElementById('targetFunction').addEventListener('change', generateData);
+        }
+
+        function generateData() {
+            const targetFunc = document.getElementById('targetFunction').value;
+            const numPoints = parseInt(document.getElementById('dataPoints').value);
+            const noiseLevel = parseFloat(document.getElementById('noiseLevel').value);
+
+            trainingData = [];
+            
+            for (let i = 0; i < numPoints; i++) {
+                const x = -2.5 + (5 * i / (numPoints - 1));
+                let y;
+                
+                switch (targetFunc) {
+                    case 'linear':
+                        y = 2 * x;
+                        break;
+                    case 'quadratic':
+                        y = x * x - 1;
+                        break;
+                    case 'sine':
+                        y = Math.sin(2 * x) + 0.5 * Math.sin(4 * x);
+                        break;
+                    case 'step':
+                        y = x > 0 ? 1 : -1;
+                        break;
+                    case 'multimodal':
+                        // Complex function with multiple local minima
+                        y = 0.5 * x * x + 0.8 * Math.sin(3 * x) + 0.3 * Math.cos(5 * x) + 0.2 * x;
+                        break;
+                    case 'rastrigin':
+                        // Rastrigin-like function (very challenging)
+                        y = 0.3 * x * x + 0.5 * Math.cos(4 * Math.PI * x) + Math.sin(2 * Math.PI * x) * 0.3;
+                        break;
+                    case 'rosenbrock':
+                        // Rosenbrock valley simulation
+                        y = (x - 0.5) * (x - 0.5) + 0.1 * (x * x - Math.sin(x)) * (x * x - Math.sin(x));
+                        break;
+                }
+                
+                // Add noise
+                y += (Math.random() - 0.5) * 2 * noiseLevel;
+                
+                trainingData.push({ x, y });
+            }
+
+            updateDataDisplay();
+            needsSurfaceUpdate = true;
+        }
+
+        function updateDataDisplay() {
+            const container = document.getElementById('dataPointsDisplay');
+            container.innerHTML = '';
+            
+            trainingData.forEach((point, i) => {
+                const div = document.createElement('div');
+                div.className = 'data-point';
+                div.innerHTML = `<strong>P${i+1}:</strong><br>(${point.x.toFixed(1)}, ${point.y.toFixed(1)})`;
+                container.appendChild(div);
+            });
+        }
+
+        function forwardPass(x, w1, b1, w2, b2) {
+            const hiddenOutput = 1 / (1 + Math.exp(-(w1 * x + b1)));
+            return w2 * hiddenOutput + b2;
+        }
+
+        function calculateLoss(w1, b1, w2, b2) {
+            let totalLoss = 0;
+            
+            trainingData.forEach(point => {
+                const predicted = forwardPass(point.x, w1, b1, w2, b2);
+                const error = predicted - point.y;
+                totalLoss += error * error;
+            });
+            
+            return totalLoss / trainingData.length;
+        }
+
+        function calculateAllGradients(w1, b1, w2, b2) {
+            let gradW1 = 0, gradB1 = 0, gradW2 = 0, gradB2 = 0;
+            
+            trainingData.forEach(point => {
+                const x = point.x;
+                const y = point.y;
+                
+                const hiddenInput = w1 * x + b1;
+                const hiddenOutput = 1 / (1 + Math.exp(-hiddenInput));
+                const predicted = w2 * hiddenOutput + b2;
+                const error = predicted - y;
+                
+                const dLoss_dOutput = 2 * error / trainingData.length;
+                
+                gradW2 += dLoss_dOutput * hiddenOutput;
+                gradB2 += dLoss_dOutput;
+                
+                const dOutput_dHidden = w2;
+                const dHidden_dInput = hiddenOutput * (1 - hiddenOutput);
+                const dLoss_dInput = dLoss_dOutput * dOutput_dHidden * dHidden_dInput;
+                
+                gradW1 += dLoss_dInput * x;
+                gradB1 += dLoss_dInput;
+            });
+            
+            return { gradW1, gradB1, gradW2, gradB2 };
+        }
+
+        function buildLossSurface() {
+            // Clear existing surfaces
+            [lossSurface, contourMesh, wireframeMesh].forEach(mesh => {
+                if (mesh) {
+                    scene.remove(mesh);
+                    mesh.geometry?.dispose();
+                    mesh.material?.dispose();
+                }
+            });
+            
+            const resolution = parseInt(document.getElementById('resolution').value);
+            const range = parseInt(document.getElementById('paramRange').value);
+            
+            // Determine w2, b2 for cross-section
+            let crossW2 = manualW2;
+            let crossB2 = manualB2;
+            
+            if (followMode && Object.keys(optimizers).length > 0) {
+                const activeOptimizers = Object.values(optimizers);
+                crossW2 = activeOptimizers.reduce((sum, opt) => sum + opt.w2, 0) / activeOptimizers.length;
+                crossB2 = activeOptimizers.reduce((sum, opt) => sum + opt.b2, 0) / activeOptimizers.length;
+                
+                // Update manual sliders to follow
+                document.getElementById('manualW2').value = crossW2;
+                document.getElementById('manualB2').value = crossB2;
+                document.getElementById('manualW2Value').textContent = crossW2.toFixed(1);
+                document.getElementById('manualB2Value').textContent = crossB2.toFixed(1);
+            }
+            
+            const geometry = new THREE.PlaneGeometry(range * 2, range * 2, resolution - 1, resolution - 1);
+            const vertices = geometry.attributes.position.array;
+            const colors = new Float32Array(vertices.length);
+            
+            let minLoss = Infinity, maxLoss = -Infinity;
+            const lossValues = [];
+            
+            // Calculate loss surface
+            for (let i = 0; i < vertices.length; i += 3) {
+                const w1 = vertices[i];
+                const b1 = vertices[i + 1];
+                
+                const loss = calculateLoss(w1, b1, crossW2, crossB2);
+                const logLoss = Math.log(1 + loss * 10) / 3; // Enhanced log scaling
+                
+                lossValues.push(logLoss);
+                vertices[i + 2] = logLoss;
+                
+                minLoss = Math.min(minLoss, logLoss);
+                maxLoss = Math.max(maxLoss, logLoss);
+            }
+            
+            // Enhanced color mapping
+            for (let i = 0; i < vertices.length; i += 3) {
+                const loss = vertices[i + 2];
+                const normalizedLoss = (loss - minLoss) / (maxLoss - minLoss);
+                
+                // Sophisticated color gradient
+                if (normalizedLoss < 0.2) {
+                    const t = normalizedLoss * 5;
+                    colors[i] = 0.1 + 0.2 * t;
+                    colors[i + 1] = 0.3 + 0.5 * t;
+                    colors[i + 2] = 0.9 + 0.1 * t;
+                } else if (normalizedLoss < 0.4) {
+                    const t = (normalizedLoss - 0.2) * 5;
+                    colors[i] = 0.3 + 0.4 * t;
+                    colors[i + 1] = 0.8 + 0.2 * t;
+                    colors[i + 2] = 1.0 - 0.3 * t;
+                } else if (normalizedLoss < 0.7) {
+                    const t = (normalizedLoss - 0.4) * 3.33;
+                    colors[i] = 0.7 + 0.3 * t;
+                    colors[i + 1] = 1.0 - 0.4 * t;
+                    colors[i + 2] = 0.7 - 0.4 * t;
+                } else {
+                    const t = (normalizedLoss - 0.7) * 3.33;
+                    colors[i] = 1.0;
+                    colors[i + 1] = 0.6 - 0.6 * t;
+                    colors[i + 2] = 0.3 - 0.3 * t;
+                }
+            }
+            
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.computeVertexNormals();
+            
+            // Create different visualizations
+            createSurfaceMesh(geometry);
+            createContourMesh(geometry, range, minLoss, maxLoss);
+            createWireframeMesh(geometry);
+            
+            updateVisualization();
+            updateCrossSectionDisplay(crossW2, crossB2);
+            
+            showSurfaceIndicator();
+            surfaceUpdateCount++;
+            document.getElementById('surfaceUpdates').textContent = surfaceUpdateCount;
+            
+            needsSurfaceUpdate = false;
+        }
+
+        function createSurfaceMesh(geometry) {
+            const material = new THREE.MeshPhongMaterial({
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.85,
+                side: THREE.DoubleSide,
+                shininess: 30,
+                specular: 0x111111
+            });
+            
+            lossSurface = new THREE.Mesh(geometry.clone(), material);
+            lossSurface.castShadow = true;
+            lossSurface.receiveShadow = true;
+        }
+
+        function createContourMesh(geometry, range, minLoss, maxLoss) {
+            // Create contour lines at different height levels
+            const contourGroup = new THREE.Group();
+            const levels = 8;
+            
+            for (let level = 0; level < levels; level++) {
+                const height = minLoss + (maxLoss - minLoss) * (level / (levels - 1));
+                const contourGeometry = new THREE.RingGeometry(0.1, range * 1.4, 32);
+                const contourMaterial = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(level / levels * 0.8, 0.8, 0.6),
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.DoubleSide
+                });
+                
+                const contour = new THREE.Mesh(contourGeometry, contourMaterial);
+                contour.position.z = height;
+                contour.rotateX(Math.PI / 2);
+                contourGroup.add(contour);
+            }
+            
+            contourMesh = contourGroup;
+        }
+
+        function createWireframeMesh(geometry) {
+            const wireframeGeometry = new THREE.WireframeGeometry(geometry.clone());
+            const wireframeMaterial = new THREE.LineBasicMaterial({
+                color: 0x00d4ff,
+                transparent: true,
+                opacity: 0.3,
+                linewidth: 1
+            });
+            
+            wireframeMesh = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+        }
+
+        function updateVisualization() {
+            // Remove all visualization objects
+            [lossSurface, contourMesh, wireframeMesh].forEach(obj => {
+                if (obj && scene.children.includes(obj)) {
+                    scene.remove(obj);
+                }
+            });
+            
+            // Add based on current view
+            switch (currentView) {
+                case 'surface':
+                    if (lossSurface) scene.add(lossSurface);
+                    break;
+                case 'contour':
+                    if (contourMesh) scene.add(contourMesh);
+                    break;
+                case 'both':
+                    if (lossSurface) scene.add(lossSurface);
+                    if (contourMesh) scene.add(contourMesh);
+                    break;
+                case 'wireframe':
+                    if (wireframeMesh) scene.add(wireframeMesh);
+                    break;
+            }
+        }
+
+        function updateCrossSectionDisplay(w2, b2) {
+            document.getElementById('manualW2Value').textContent = w2.toFixed(1);
+            document.getElementById('manualB2Value').textContent = b2.toFixed(1);
+        }
+
+        function showSurfaceIndicator() {
+            const indicator = document.getElementById('surfaceIndicator');
+            indicator.classList.add('active');
+            setTimeout(() => indicator.classList.remove('active'), 1000);
+        }
+
+        function followOptimizers() {
+            followMode = true;
+            updateStatus('Following optimizer positions for cross-section');
+            if (Object.keys(optimizers).length > 0) {
+                needsSurfaceUpdate = true;
+            }
+        }
+
+        function lockCrossSection() {
+            followMode = false;
+            isLocked = true;
+            manualW2 = parseFloat(document.getElementById('manualW2').value);
+            manualB2 = parseFloat(document.getElementById('manualB2').value);
+            updateStatus(`Cross-section locked at w₂=${manualW2.toFixed(1)}, b₂=${manualB2.toFixed(1)}`);
+            needsSurfaceUpdate = true;
+        }
+
+        function createOptimizer(type) {
+            const colors = {
+                sgd: 0xff4757,
+                momentum: 0xffb347,
+                adam: 0x00ff87,
+                rmsprop: 0x3742fa
+            };
+
+            const range = parseInt(document.getElementById('paramRange').value);
+            
+            // Random 4D starting position
+            const startW1 = (Math.random() - 0.5) * range * 0.6;
+            const startB1 = (Math.random() - 0.5) * range * 0.6;
+            const startW2 = 0.8 + (Math.random() - 0.5) * 0.8;
+            const startB2 = (Math.random() - 0.5) * 0.8;
+
+            // Create enhanced sphere
+            const geometry = new THREE.SphereGeometry(0.08, 16, 16);
+            const material = new THREE.MeshPhongMaterial({
+                color: colors[type],
+                transparent: true,
+                opacity: 0.9,
+                emissive: new THREE.Color(colors[type]).multiplyScalar(0.2),
+                shininess: 100
+            });
+            
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.castShadow = true;
+            
+            // Create enhanced trail
+            const trailMaterial = new THREE.LineBasicMaterial({
+                color: colors[type],
+                transparent: true,
+                opacity: 0.8,
+                linewidth: 2
+            });
+            const trail = new THREE.Line(new THREE.BufferGeometry(), trailMaterial);
+
+            scene.add(sphere);
+            scene.add(trail);
+
+            // Initialize complete optimizer state
+            optimizers[type] = {
+                sphere: sphere,
+                trail: trail,
+                w1: startW1, b1: startB1, w2: startW2, b2: startB2,
+                
+                // All optimizer states for 4 parameters
+                vw1: 0, vb1: 0, vw2: 0, vb2: 0,
+                mw1: 0, mb1: 0, mw2: 0, mb2: 0,
+                vw1_adam: 0, vb1_adam: 0, vw2_adam: 0, vb2_adam: 0,
+                sw1: 0, sb1: 0, sw2: 0, sb2: 0,
+                
+                t: 0,
+                trailPoints: [],
+                converged: false,
+                lossHistory: []
+            };
+
+            updateOptimizerPosition(type);
+            needsSurfaceUpdate = true;
+        }
+
+        function removeOptimizer(type) {
+            if (optimizers[type]) {
+                scene.remove(optimizers[type].sphere);
+                scene.remove(optimizers[type].trail);
+                optimizers[type].sphere.geometry.dispose();
+                optimizers[type].sphere.material.dispose();
+                delete optimizers[type];
+                needsSurfaceUpdate = true;
+            }
+        }
+
+        function updateOptimizerPosition(type) {
+            const optimizer = optimizers[type];
+            if (!optimizer) return;
+
+            const loss = calculateLoss(optimizer.w1, optimizer.b1, optimizer.w2, optimizer.b2);
+            const logLoss = Math.log(1 + loss * 10) / 3;
+            
+            optimizer.sphere.position.set(optimizer.w1, optimizer.b1, logLoss + 0.1);
+            optimizer.lossHistory.push(loss);
+
+            // Enhanced trail with fading effect
+            optimizer.trailPoints.push(new THREE.Vector3(optimizer.w1, optimizer.b1, logLoss + 0.02));
+            if (optimizer.trailPoints.length > 120) {
+                optimizer.trailPoints.shift();
+            }
+
+            const trailGeometry = new THREE.BufferGeometry().setFromPoints(optimizer.trailPoints);
+            optimizer.trail.geometry.dispose();
+            optimizer.trail.geometry = trailGeometry;
+
+            // Update parameter displays
+            const firstOptimizer = Object.keys(optimizers)[0];
+            if (type === firstOptimizer) {
+                document.getElementById('w1Display').value = optimizer.w1.toFixed(4);
+                document.getElementById('b1Display').value = optimizer.b1.toFixed(4);
+                document.getElementById('w2Display').value = optimizer.w2.toFixed(4);
+                document.getElementById('b2Display').value = optimizer.b2.toFixed(4);
+            }
+        }
+
+        function optimizationStep() {
+            let allConverged = true;
+            let currentBestLoss = Infinity;
+
+            Object.keys(optimizers).forEach(type => {
+                const optimizer = optimizers[type];
+                if (!optimizer || optimizer.converged) return;
+
+                const { gradW1, gradB1, gradW2, gradB2 } = calculateAllGradients(
+                    optimizer.w1, optimizer.b1, optimizer.w2, optimizer.b2
+                );
+                
+                const gradMagnitude = Math.sqrt(gradW1*gradW1 + gradB1*gradB1 + gradW2*gradW2 + gradB2*gradB2);
+                if (gradMagnitude < 1e-6) {
+                    optimizer.converged = true;
+                    return;
+                }
+
+                let updateW1, updateB1, updateW2, updateB2;
+                optimizer.t++;
+
+                switch (type) {
+                    case 'sgd':
+                        const sgdLR = parseFloat(document.getElementById('sgdLR').value);
+                        updateW1 = -sgdLR * gradW1;
+                        updateB1 = -sgdLR * gradB1;
+                        updateW2 = -sgdLR * gradW2;
+                        updateB2 = -sgdLR * gradB2;
+                        break;
+
+                    case 'momentum':
+                        const momLR = parseFloat(document.getElementById('momentumLR').value);
+                        const momBeta = parseFloat(document.getElementById('momentumBeta').value);
+                        
+                        optimizer.vw1 = momBeta * optimizer.vw1 + (1 - momBeta) * gradW1;
+                        optimizer.vb1 = momBeta * optimizer.vb1 + (1 - momBeta) * gradB1;
+                        optimizer.vw2 = momBeta * optimizer.vw2 + (1 - momBeta) * gradW2;
+                        optimizer.vb2 = momBeta * optimizer.vb2 + (1 - momBeta) * gradB2;
+                        
+                        updateW1 = -momLR * optimizer.vw1;
+                        updateB1 = -momLR * optimizer.vb1;
+                        updateW2 = -momLR * optimizer.vw2;
+                        updateB2 = -momLR * optimizer.vb2;
+                        break;
+
+                    case 'adam':
+                        const adamLR = parseFloat(document.getElementById('adamLR').value);
+                        const adamBeta1 = parseFloat(document.getElementById('adamBeta1').value);
+                        const adamBeta2 = parseFloat(document.getElementById('adamBeta2').value);
+                        const eps = 1e-8;
+                        
+                        optimizer.mw1 = adamBeta1 * optimizer.mw1 + (1 - adamBeta1) * gradW1;
+                        optimizer.mb1 = adamBeta1 * optimizer.mb1 + (1 - adamBeta1) * gradB1;
+                        optimizer.mw2 = adamBeta1 * optimizer.mw2 + (1 - adamBeta1) * gradW2;
+                        optimizer.mb2 = adamBeta1 * optimizer.mb2 + (1 - adamBeta1) * gradB2;
+                        
+                        optimizer.vw1_adam = adamBeta2 * optimizer.vw1_adam + (1 - adamBeta2) * gradW1 * gradW1;
+                        optimizer.vb1_adam = adamBeta2 * optimizer.vb1_adam + (1 - adamBeta2) * gradB1 * gradB1;
+                        optimizer.vw2_adam = adamBeta2 * optimizer.vw2_adam + (1 - adamBeta2) * gradW2 * gradW2;
+                        optimizer.vb2_adam = adamBeta2 * optimizer.vb2_adam + (1 - adamBeta2) * gradB2 * gradB2;
+                        
+                        const beta1_t = Math.pow(adamBeta1, optimizer.t);
+                        const beta2_t = Math.pow(adamBeta2, optimizer.t);
+                        
+                        const mw1_hat = optimizer.mw1 / (1 - beta1_t);
+                        const mb1_hat = optimizer.mb1 / (1 - beta1_t);
+                        const mw2_hat = optimizer.mw2 / (1 - beta1_t);
+                        const mb2_hat = optimizer.mb2 / (1 - beta1_t);
+                        
+                        const vw1_hat = optimizer.vw1_adam / (1 - beta2_t);
+                        const vb1_hat = optimizer.vb1_adam / (1 - beta2_t);
+                        const vw2_hat = optimizer.vw2_adam / (1 - beta2_t);
+                        const vb2_hat = optimizer.vb2_adam / (1 - beta2_t);
+                        
+                        updateW1 = -adamLR * mw1_hat / (Math.sqrt(vw1_hat) + eps);
+                        updateB1 = -adamLR * mb1_hat / (Math.sqrt(vb1_hat) + eps);
+                        updateW2 = -adamLR * mw2_hat / (Math.sqrt(vw2_hat) + eps);
+                        updateB2 = -adamLR * mb2_hat / (Math.sqrt(vb2_hat) + eps);
+                        break;
+
+                    case 'rmsprop':
+                        const rmspropLR = parseFloat(document.getElementById('rmspropLR').value);
+                        const rmspropDecay = parseFloat(document.getElementById('rmspropDecay').value);
+                        const epsilon = 1e-8;
+                        
+                        optimizer.sw1 = rmspropDecay * optimizer.sw1 + (1 - rmspropDecay) * gradW1 * gradW1;
+                        optimizer.sb1 = rmspropDecay * optimizer.sb1 + (1 - rmspropDecay) * gradB1 * gradB1;
+                        optimizer.sw2 = rmspropDecay * optimizer.sw2 + (1 - rmspropDecay) * gradW2 * gradW2;
+                        optimizer.sb2 = rmspropDecay * optimizer.sb2 + (1 - rmspropDecay) * gradB2 * gradB2;
+                        
+                        updateW1 = -rmspropLR * gradW1 / (Math.sqrt(optimizer.sw1) + epsilon);
+                        updateB1 = -rmspropLR * gradB1 / (Math.sqrt(optimizer.sb1) + epsilon);
+                        updateW2 = -rmspropLR * gradW2 / (Math.sqrt(optimizer.sw2) + epsilon);
+                        updateB2 = -rmspropLR * gradB2 / (Math.sqrt(optimizer.sb2) + epsilon);
+                        break;
+                }
+
+                // Apply updates with bounds
+                optimizer.w1 += updateW1;
+                optimizer.b1 += updateB1;
+                optimizer.w2 += updateW2;
+                optimizer.b2 += updateB2;
+
+                const range = parseInt(document.getElementById('paramRange').value);
+                optimizer.w1 = Math.max(-range, Math.min(range, optimizer.w1));
+                optimizer.b1 = Math.max(-range, Math.min(range, optimizer.b1));
+                optimizer.w2 = Math.max(-4, Math.min(4, optimizer.w2));
+                optimizer.b2 = Math.max(-3, Math.min(3, optimizer.b2));
+
+                const currentLoss = calculateLoss(optimizer.w1, optimizer.b1, optimizer.w2, optimizer.b2);
+                currentBestLoss = Math.min(currentBestLoss, currentLoss);
+                
+                updateOptimizerPosition(type);
+                allConverged = false;
+            });
+
+            // Surface update logic
+            const updateRate = parseInt(document.getElementById('updateRate').value);
+            if (stepCount % updateRate === 0 && Object.keys(optimizers).length > 0) {
+                needsSurfaceUpdate = true;
+            }
+
+            // Update metrics
+            stepCount++;
+            bestLoss = Math.min(bestLoss, currentBestLoss);
+            
+            document.getElementById('stepCount').textContent = stepCount;
+            document.getElementById('currentLoss').textContent = currentBestLoss === Infinity ? '-' : currentBestLoss.toFixed(6);
+            document.getElementById('bestLoss').textContent = bestLoss === Infinity ? '-' : bestLoss.toFixed(6);
+
+            updateChart();
+            
+            return allConverged || stepCount >= 2500;
+        }
+
+        function startOptimization() {
+            Object.keys(optimizers).forEach(removeOptimizer);
+            
+            document.querySelectorAll('.optimizer-card.active').forEach(card => {
+                const type = card.dataset.optimizer;
+                createOptimizer(type);
+                card.classList.add('running');
+            });
+
+            if (Object.keys(optimizers).length === 0) {
+                updateStatus('Please select at least one optimizer');
+                return;
+            }
+
+            isTraining = true;
+            updateStatus('4D optimization in progress - surface updating dynamically...');
+            buildLossSurface();
+        }
+
+        function stopOptimization() {
+            isTraining = false;
+            document.querySelectorAll('.optimizer-card').forEach(card => {
+                card.classList.remove('running');
+            });
+            updateStatus('Training stopped');
+        }
+
+        function resetOptimizers() {
+            stopOptimization();
+            stepCount = 0;
+            bestLoss = Infinity;
+            surfaceUpdateCount = 0;
+            
+            Object.keys(optimizers).forEach(type => {
+                const optimizer = optimizers[type];
+                const range = parseInt(document.getElementById('paramRange').value);
+                
+                optimizer.w1 = (Math.random() - 0.5) * range * 0.6;
+                optimizer.b1 = (Math.random() - 0.5) * range * 0.6;
+                optimizer.w2 = 0.8 + (Math.random() - 0.5) * 0.8;
+                optimizer.b2 = (Math.random() - 0.5) * 0.8;
+                
+                // Reset all states
+                Object.assign(optimizer, {
+                    vw1: 0, vb1: 0, vw2: 0, vb2: 0,
+                    mw1: 0, mb1: 0, mw2: 0, mb2: 0,
+                    vw1_adam: 0, vb1_adam: 0, vw2_adam: 0, vb2_adam: 0,
+                    sw1: 0, sb1: 0, sw2: 0, sb2: 0,
+                    t: 0, trailPoints: [], converged: false, lossHistory: []
+                });
+                
+                updateOptimizerPosition(type);
+            });
+
+            // Reset displays
+            ['stepCount', 'currentLoss', 'bestLoss', 'surfaceUpdates'].forEach(id => {
+                document.getElementById(id).textContent = id === 'surfaceUpdates' ? '0' : (id === 'stepCount' ? '0' : '-');
+            });
+            
+            if (lossChart) {
+                lossChart.data.labels = [];
+                lossChart.data.datasets.forEach(dataset => dataset.data = []);
+                lossChart.update();
+            }
+            
+            needsSurfaceUpdate = true;
+            updateStatus('All optimizers reset to random 4D positions');
+        }
+
+        function updateStatus(message) {
+            document.getElementById('statusBar').textContent = message;
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('lossChart').getContext('2d');
+            
+            lossChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'SGD', data: [], borderColor: '#ff4757', backgroundColor: 'rgba(255, 71, 87, 0.1)', borderWidth: 2, fill: false, tension: 0.1 },
+                        { label: 'Momentum', data: [], borderColor: '#ffb347', backgroundColor: 'rgba(255, 179, 71, 0.1)', borderWidth: 2, fill: false, tension: 0.1 },
+                        { label: 'Adam', data: [], borderColor: '#00ff87', backgroundColor: 'rgba(0, 255, 135, 0.1)', borderWidth: 2, fill: false, tension: 0.1 },
+                        { label: 'RMSprop', data: [], borderColor: '#3742fa', backgroundColor: 'rgba(55, 66, 250, 0.1)', borderWidth: 2, fill: false, tension: 0.1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { color: '#e3f2fd', usePointStyle: true, pointStyle: 'circle' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Steps', color: '#e3f2fd' },
+                            ticks: { color: '#b3e5fc' },
+                            grid: { color: 'rgba(179, 229, 252, 0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Loss', color: '#e3f2fd' },
+                            type: 'logarithmic',
+                            ticks: { color: '#b3e5fc' },
+                            grid: { color: 'rgba(179, 229, 252, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!lossChart) return;
+
+            const optimizerTypes = ['sgd', 'momentum', 'adam', 'rmsprop'];
+            
+            lossChart.data.labels.push(stepCount);
+            
+            optimizerTypes.forEach((type, index) => {
+                const optimizer = optimizers[type];
+                const dataset = lossChart.data.datasets[index];
+                
+                if (optimizer && optimizer.lossHistory.length > 0) {
+                    const currentLoss = optimizer.lossHistory[optimizer.lossHistory.length - 1];
+                    dataset.data.push(currentLoss);
+                } else {
+                    dataset.data.push(null);
+                }
+            });
+
+            if (lossChart.data.labels.length > 250) {
+                lossChart.data.labels.shift();
+                lossChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+
+            lossChart.update('none');
+        }
+
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            updateCamera();
+
+            if (needsSurfaceUpdate) {
+                buildLossSurface();
+            }
+
+            if (isTraining) {
+                const finished = optimizationStep();
+                if (finished) {
+                    stopOptimization();
+                    updateStatus('Training completed - converged or max steps reached');
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Global functions
+        window.generateData = generateData;
+        window.startOptimization = startOptimization;
+        window.stopOptimization = stopOptimization;
+        window.resetOptimizers = resetOptimizers;
+        window.followOptimizers = followOptimizers;
+        window.lockCrossSection = lockCrossSection;
+
+        // Responsive handling
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('threejs-container');
+            if (container.clientWidth > 0 && container.clientHeight > 0) {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+        });
+    </script>
+</body>
+</html>

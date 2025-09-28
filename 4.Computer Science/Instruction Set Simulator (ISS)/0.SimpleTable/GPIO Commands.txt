@@ -1,0 +1,5 @@
+# Set the value of GPIO pin 0 to 1
+17 0 1
+
+# Get the value of GPIO pin 0 (should print 1 in the console)
+18 0

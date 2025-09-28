@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+
+.grid-container {
+  display: grid;
+  grid-template-columns: auto;
+  grid-gap: 10px;
+  background-color: #2196F3;
+  padding: 10px;
+}
+.grid-container > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 20px 0;
+  font-size: 90px;
+}
+
+
+
+.slidecontainer {
+    width: 100%;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    width: 23px;
+    height: 24px;
+    border: 0;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 23px;
+    height: 24px;
+    border: 0;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<!--slider end-->
+  <h1>Range Slider Picture</h1>
+
+<div class="slidecontainer">
+  <input type="range" min="1" max="10" value="1" class="slider" id="myRange">
+  <p>Value: <span id="demo"></span></p>
+</div>
+
+<!--slider end-->
+  <div class="grid-container">
+    <div id="myCard"></div>
+  </div>
+
+<button onclick="start()"> Start</button>
+
+<script>
+let cardIndex = 0;
+let card = document.getElementById("myCard");
+let cards = ["A", "B", "C","D", "E", "F","G", "H", "I","J", "K", "L","M", "N", "O","P", "Q", "R","S", "T", "U","V", "W", "X","Y", "Z"]
+
+
+//slider 
+var slider = document.getElementById("myRange");
+var output = document.getElementById("demo");
+output.innerHTML = slider.value;
+
+slider.oninput = function() {
+  output.innerHTML = this.value;
+}
+
+ 
+//init button
+function start() {
+ showCard(parseInt(slider.value)*1000)
+}
+
+function showCard(timeSeconds) {
+  var i;
+  //get display div
+  if (cardIndex > cards.length) {cardIndex = 0}    
+  card.innerHTML =  cards[cardIndex];
+  console.log(cards[cardIndex]);
+  cardIndex++;
+  setTimeout(showCard,timeSeconds); // Change image every 2 seconds
+}
+
+
+</script>
+</body>
+</html> 

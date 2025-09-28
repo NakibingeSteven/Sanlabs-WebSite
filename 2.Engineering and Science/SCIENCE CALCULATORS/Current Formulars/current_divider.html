@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Divider Calculator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .card {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        h2 {
+            margin-bottom: 25px;
+            color: #333;
+            font-size: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="number"]:focus {
+            border-color: #5cb85c;
+            outline: none;
+        }
+
+        button {
+            background: linear-gradient(135deg, #28a745, #218838);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #218838, #1e7e34);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .result {
+            margin-top: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .formula-section {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .formula-section img {
+            width: 80%;
+            max-width: 300px;
+            margin-top: 20px;
+        }
+
+        .formula-section p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 30px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            input[type="number"],
+            button {
+                font-size: 14px;
+            }
+
+            .result {
+                font-size: 18px;
+            }
+
+            .formula-section img {
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Current Divider Calculator</h2>
+        <input type="number" id="i_in" placeholder="Current Source (I<sub>in</sub>) in A" step="any" required>
+        <input type="number" id="r1" placeholder="Resistance R1 (Ω)" step="any" required>
+        <input type="number" id="r2" placeholder="Resistance R2 (Ω)" step="any" required>
+        <button onclick="calculateCurrent()">Calculate Current through R2</button>
+        <div class="result" id="result"></div>
+
+        <div class="formula-section">
+            <h3>Current Divider Formula</h3>
+            <p>Formula: <strong>I<sub>R2</sub> = I<sub>in</sub> × R1 / (R1 + R2)</strong></p>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Current_divider.svg/1280px-Current_divider.svg.png" alt="Current Divider Circuit">
+            <p>Circuit diagram of the current divider</p>
+        </div>
+    </div>
+
+    <script>
+        function calculateCurrent() {
+            const i_in = parseFloat(document.getElementById('i_in').value);
+            const r1 = parseFloat(document.getElementById('r1').value);
+            const r2 = parseFloat(document.getElementById('r2').value);
+
+            if (isNaN(i_in) || isNaN(r1) || isNaN(r2) || r1 <= 0 || r2 <= 0) {
+                document.getElementById('result').innerText = "Please enter valid values.";
+                return;
+            }
+
+            const i_r2 = i_in * r1 / (r1 + r2);
+            document.getElementById('result').innerText = `Current through R2: ${i_r2.toFixed(4)} A`;
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8" />
+    <title>Enhanced Vector Database Explorer - Advanced Semantic Search</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.8rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #764ba2;
+            padding-bottom: 8px;
+        }
+
+        .text-input-area {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-area {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px 0;
+            display: block;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .corpus-textarea {
+            height: 200px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .search-input {
+            font-size: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .document-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .document-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .document-card.selected {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.1);
+        }
+
+        .document-preview {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            max-height: 60px;
+            overflow: hidden;
+        }
+
+        .document-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .similarity-score {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .similarity-bar {
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+
+        .similarity-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .vector-visualization {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .vector-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 2px;
+            margin: 10px 0;
+        }
+
+        .vector-component {
+            padding: 4px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 10px;
+            text-align: center;
+            position: relative;
+        }
+
+        .vector-component.positive {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .vector-component.negative {
+            background: linear-gradient(45deg, #dc3545, #fd7e14);
+            color: white;
+        }
+
+        .vector-component:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .processing-indicator {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .similarity-heatmap {
+            display: grid;
+            gap: 2px;
+            margin: 10px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            min-height: 200px;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .heatmap-cell::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .heatmap-cell:hover::after {
+            opacity: 1;
+        }
+
+        .preset-corpus {
+            margin-bottom: 10px;
+        }
+
+        .preset-corpus button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .preset-corpus button:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .search-results {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .query-history {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .query-item {
+            background: #f8f9fa;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s ease;
+        }
+
+        .query-item:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .embedding-method {
+            margin: 10px 0;
+        }
+
+        .sensitivity-controls {
+            margin: 15px 0;
+        }
+
+        .control-group {
+            margin: 10px 0;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .range-input {
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        .range-value {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .clustering-section {
+            margin-top: 15px;
+        }
+
+        .cluster-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 8px 0;
+        }
+
+        .cluster-header {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .cluster-documents {
+            font-size: 11px;
+            color: #666;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .interactive-controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 6px 12px;
+            border: 1px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover, .control-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔍 Enhanced Vector Database Explorer</h1>
+        
+        <div class="main-grid">
+            <!-- Left Sidebar: Corpus Management -->
+            <div class="sidebar">
+                <div class="section">
+                    <h3>📚 Text Corpus</h3>
+                    <div class="preset-corpus">
+                        <button onclick="loadPresetCorpus('tech')">📱 Technology Articles</button>
+                        <button onclick="loadPresetCorpus('science')">🔬 Science Papers</button>
+                        <button onclick="loadPresetCorpus('literature')">📖 Literature Quotes</button>
+                        <button onclick="loadPresetCorpus('business')">💼 Business News</button>
+                        <button onclick="loadPresetCorpus('diverse')">🌍 Diverse Topics</button>
+                        <button onclick="loadPresetCorpus('custom')">✏️ Custom Text</button>
+                    </div>
+                    
+                    <textarea 
+                        id="corpusInput" 
+                        class="corpus-textarea" 
+                        placeholder="Enter your text corpus here. Each paragraph will be treated as a separate document for vectorization..."
+                    ></textarea>
+                    
+                    <div class="control-group">
+                        <label>Embedding Method:</label>
+                        <select id="embeddingMethod" onchange="updateEmbeddingMethod()">
+                            <option value="enhanced-tfidf">Enhanced TF-IDF</option>
+                            <option value="ngram-tfidf">N-gram TF-IDF</option>
+                            <option value="word2vec-sim">Word2Vec Simulation</option>
+                            <option value="semantic-hash">Semantic Hashing</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="processCorpus()">🚀 Build Vector Database</button>
+                    <button class="btn btn-secondary" onclick="clearDatabase()">🗑️ Clear Database</button>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>📊 Database Stats</h3>
+                    <div class="stats-display" id="statsDisplay">
+                        <div class="stat-card">
+                            <div class="stat-number" id="docCount">0</div>
+                            <div class="stat-label">Documents</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="vectorDim">0</div>
+                            <div class="stat-label">Vector Dims</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="dbSize">0 KB</div>
+                            <div class="stat-label">DB Size</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="avgSimilarity">0%</div>
+                            <div class="stat-label">Avg Similarity</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🎯 Advanced Search Settings</h3>
+                    <div class="sensitivity-controls">
+                        <div class="control-group">
+                            <label>Results Count: <span class="range-value" id="resultCountLabel">8</span></label>
+                            <input type="range" id="resultCount" min="3" max="25" value="8" class="range-input" oninput="updateRangeValue('resultCount', 'resultCountLabel')">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Similarity Threshold: <span class="range-value" id="thresholdLabel">0.05</span></label>
+                            <input type="range" id="similarityThreshold" min="0" max="0.8" step="0.01" value="0.05" class="range-input" oninput="updateRangeValue('similarityThreshold', 'thresholdLabel')">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Vector Sensitivity: <span class="range-value" id="sensitivityLabel">1.5</span></label>
+                            <input type="range" id="vectorSensitivity" min="0.5" max="3.0" step="0.1" value="1.5" class="range-input" oninput="updateRangeValue('vectorSensitivity', 'sensitivityLabel')">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>N-gram Size: <span class="range-value" id="ngramLabel">2</span></label>
+                            <input type="range" id="ngramSize" min="1" max="4" value="2" class="range-input" oninput="updateRangeValue('ngramSize', 'ngramLabel')">
+                        </div>
+                    </div>
+                    
+                    <div class="interactive-controls">
+                        <button class="control-btn" onclick="performClusterAnalysis()">🔬 Cluster</button>
+                        <button class="control-btn" onclick="findOutliers()">📍 Outliers</button>
+                        <button class="control-btn" onclick="analyzeDiversity()">📈 Diversity</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center: Search Interface -->
+            <div class="text-input-area">
+                <h3>🔍 Advanced Semantic Search</h3>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Enter your search query to find semantically similar content..."
+                    onkeypress="if(event.key==='Enter') performSearch()"
+                >
+                
+                <div class="interactive-controls">
+                    <button class="control-btn" onclick="performSearch()">🔍 Search</button>
+                    <button class="control-btn" onclick="performFuzzySearch()">🌊 Fuzzy</button>
+                    <button class="control-btn" onclick="performSemanticExpansion()">🧠 Expand</button>
+                    <button class="control-btn" onclick="performSimilarityRanking()">📊 Rank</button>
+                </div>
+                
+                <div class="processing-indicator" id="processingIndicator">
+                    <div class="spinner"></div>
+                    <p>Processing vectors and computing similarities...</p>
+                </div>
+                
+                <div class="search-results" id="searchResults">
+                    <p style="text-align: center; color: #666; margin: 40px 0;">
+                        Add a text corpus and build the vector database to start searching!
+                    </p>
+                </div>
+
+                <div class="section" style="margin-top: 20px;">
+                    <h3>🔍 Query History & Analysis</h3>
+                    <div class="query-history" id="queryHistory">
+                        <p style="color: #666; font-size: 12px;">Your search queries will appear here...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Vector Analysis -->
+            <div class="sidebar">
+                <div class="section">
+                    <h3>🧠 Vector Analysis</h3>
+                    <div id="vectorAnalysis">
+                        <p style="color: #666; font-size: 14px;">Perform a search to see vector representations and similarity analysis...</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🌡️ Interactive Similarity Heatmap</h3>
+                    <div class="interactive-controls">
+                        <button class="control-btn active" id="heatmapMode" onclick="toggleHeatmapMode()">Matrix</button>
+                        <button class="control-btn" onclick="generateCrossCorrelation()">Cross-Corr</button>
+                        <button class="control-btn" onclick="generateDistanceMap()">Distance</button>
+                    </div>
+                    <div class="similarity-heatmap" id="similarityHeatmap">
+                        <p style="color: #666; font-size: 12px; text-align: center;">Enhanced heatmap will show after search</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🔬 Document Deep Dive</h3>
+                    <div id="documentDetails">
+                        <p style="color: #666; font-size: 14px;">Click on a search result to see detailed analysis...</p>
+                    </div>
+                </div>
+
+                <div class="section clustering-section">
+                    <h3>🎯 Cluster Analysis</h3>
+                    <div id="clusterResults">
+                        <p style="color: #666; font-size: 12px;">Run clustering to see document groupings...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced global variables
+        let vectorDatabase = [];
+        let queryHistory = [];
+        let currentQuery = null;
+        let selectedDocument = null;
+        let vocabulary = new Map();
+        let documentVectors = [];
+        let embeddingMethod = 'enhanced-tfidf';
+        let vectorSensitivity = 1.5;
+        let ngramSize = 2;
+        let clusters = [];
+
+        // Enhanced preset corpora with more diverse content
+        const presetCorpora = {
+            tech: `Artificial intelligence and machine learning are revolutionizing industries across the globe, transforming how businesses operate.
+Deep neural networks process vast amounts of data to identify complex patterns that traditional algorithms cannot detect.
+Cloud computing infrastructure enables scalable solutions that can adapt to varying workloads and user demands efficiently.
+Blockchain technology provides decentralized, tamper-resistant ledgers for secure transaction processing and data verification.
+Virtual and augmented reality create immersive digital experiences that bridge the gap between physical and digital worlds.
+Internet of Things sensors connect everyday objects to smart networks, enabling automated decision-making processes.
+Cybersecurity frameworks protect against sophisticated threats that exploit vulnerabilities in interconnected systems.
+Quantum computing harnesses quantum mechanical phenomena to solve computationally intractable problems exponentially faster.
+Edge computing brings data processing closer to sources, reducing latency and improving real-time response capabilities.
+Automation and robotics are reshaping manufacturing processes, increasing efficiency while reducing human error rates.`,
+
+            science: `Evolutionary biology explains species diversity through natural selection, genetic drift, and environmental pressures over time.
+Quantum mechanics describes subatomic particle behavior using probability distributions and wave-particle duality principles.
+Climate science studies atmospheric changes caused by greenhouse gas emissions and their global environmental impacts.
+Genomics and proteomics enable personalized medicine approaches by analyzing individual genetic and protein expression profiles.
+Neuroscience research investigates brain function, consciousness, and cognitive processes using advanced imaging techniques.
+Renewable energy technologies harness solar, wind, and hydroelectric power for sustainable electricity generation systems.
+Astrobiology explores potential life in extreme environments and extraterrestrial habitats throughout the universe.
+Gene editing tools like CRISPR allow precise DNA modifications to treat genetic disorders and improve crop yields.
+Materials science develops novel substances with unique properties for applications in electronics, medicine, and construction.
+Ecology examines ecosystem interactions, biodiversity conservation, and environmental restoration strategies.`,
+
+            literature: `Shakespeare's works explore timeless themes of love, betrayal, ambition, and the human condition across centuries.
+Poetry captures fleeting moments of beauty, emotion, and insight through carefully crafted language and imagery.
+Classic novels examine social issues, moral dilemmas, and cultural transformations within historical contexts.
+Modern literature reflects contemporary concerns about identity, technology, and globalization's impact on society.
+Mythology preserves ancient wisdom, cultural values, and archetypal stories that resonate across civilizations.
+Drama brings characters to life on stage, revealing psychological depths and universal human experiences.
+Literary criticism analyzes texts to uncover hidden meanings, cultural significance, and artistic techniques.
+Creative writing transforms personal experiences into universal narratives that connect with diverse audiences.
+Comparative literature studies works across cultures, languages, and time periods to identify common themes.
+Storytelling traditions preserve oral histories and cultural knowledge passed down through generations.`,
+
+            business: `Market volatility creates uncertainty that affects investment decisions, consumer confidence, and economic stability globally.
+Digital transformation requires organizations to adopt new technologies, processes, and business models for competitive advantage.
+Supply chain optimization involves coordinating suppliers, manufacturers, and distributors to minimize costs and maximize efficiency.
+Customer relationship management systems help companies build lasting relationships through personalized service and targeted marketing.
+Financial analytics provide insights into performance metrics, risk assessment, and strategic planning for sustainable growth.
+Remote work policies have permanently changed organizational culture, communication patterns, and employee productivity measures.
+Sustainability initiatives integrate environmental responsibility into business operations to meet stakeholder expectations.
+Innovation ecosystems foster collaboration between startups, corporations, and research institutions for technological advancement.
+Mergers and acquisitions reshape industry landscapes by combining resources, capabilities, and market positions.
+Leadership development programs cultivate skills needed to navigate complex challenges in rapidly changing markets.`,
+
+            diverse: `Cooking traditions reflect cultural heritage, local ingredients, and historical influences that shape regional cuisines worldwide.
+Architecture combines aesthetic principles with functional requirements to create spaces that inspire and serve communities.
+Music expresses emotions, tells stories, and brings people together across linguistic and cultural boundaries.
+Sports promote physical fitness, teamwork, and competitive spirit while entertaining millions of spectators globally.
+Education systems prepare students for future challenges by developing critical thinking, creativity, and technical skills.
+Healthcare advances improve quality of life through prevention, treatment, and rehabilitation of various medical conditions.
+Transportation networks connect communities, facilitate commerce, and enable cultural exchange between distant regions.
+Environmental conservation protects natural resources, endangered species, and ecosystems for future generations.
+Communication technologies enable instant global connectivity, transforming social interactions and information sharing.
+Art movements throughout history have challenged conventions, expressed social commentary, and inspired cultural change.`
+        };
+
+        // Enhanced embedding methods
+        class VectorEmbedding {
+            static createEnhancedTFIDF(document, allDocuments, sensitivity = 1.0) {
+                const words = this.tokenize(document);
+                const vector = new Array(vocabulary.size).fill(0);
+                
+                // Enhanced term frequency with positional weighting
+                const termFreq = new Map();
+                words.forEach((word, position) => {
+                    if (vocabulary.has(word)) {
+                        const positionWeight = 1 + (0.1 * (words.length - position) / words.length);
+                        termFreq.set(word, (termFreq.get(word) || 0) + positionWeight);
+                    }
+                });
+
+                // Calculate enhanced TF-IDF with sensitivity adjustment
+                vocabulary.forEach((index, word) => {
+                    if (termFreq.has(word)) {
+                        const tf = termFreq.get(word) / words.length;
+                        
+                        // Calculate IDF with smoothing
+                        const docsWithTerm = allDocuments.filter(doc => 
+                            this.tokenize(doc).includes(word)
+                        ).length;
+                        const idf = Math.log((allDocuments.length + 1) / (docsWithTerm + 1)) + 1;
+                        
+                        vector[index] = Math.pow(tf * idf, sensitivity);
+                    }
+                });
+
+                return this.normalizeVector(vector);
+            }
+
+            static createNgramTFIDF(document, allDocuments, n = 2, sensitivity = 1.0) {
+                const words = this.tokenize(document);
+                const ngrams = this.generateNgrams(words, n);
+                const combinedTerms = [...words, ...ngrams];
+                
+                // Build n-gram vocabulary
+                const ngramVocab = new Map();
+                let index = 0;
+                combinedTerms.forEach(term => {
+                    if (!ngramVocab.has(term)) {
+                        ngramVocab.set(term, index++);
+                    }
+                });
+
+                const vector = new Array(ngramVocab.size).fill(0);
+                
+                // Calculate term frequencies
+                const termFreq = new Map();
+                combinedTerms.forEach(term => {
+                    termFreq.set(term, (termFreq.get(term) || 0) + 1);
+                });
+
+                // Calculate TF-IDF for n-grams
+                ngramVocab.forEach((idx, term) => {
+                    if (termFreq.has(term)) {
+                        const tf = termFreq.get(term) / combinedTerms.length;
+                        
+                        // Calculate IDF for n-grams
+                        const docsWithTerm = allDocuments.filter(doc => {
+                            const docWords = this.tokenize(doc);
+                            const docNgrams = this.generateNgrams(docWords, n);
+                            return [...docWords, ...docNgrams].includes(term);
+                        }).length;
+                        
+                        const idf = Math.log((allDocuments.length + 1) / (docsWithTerm + 1)) + 1;
+                        vector[idx] = Math.pow(tf * idf, sensitivity);
+                    }
+                });
+
+                return this.normalizeVector(vector);
+            }
+
+            static createWord2VecSimulation(document, allDocuments, sensitivity = 1.0) {
+                const words = this.tokenize(document);
+                const vector = new Array(Math.min(vocabulary.size, 100)).fill(0);
+                
+                // Simulate word2vec with co-occurrence matrix
+                const windowSize = 3;
+                const cooccurrence = new Map();
+                
+                words.forEach((word, i) => {
+                    if (vocabulary.has(word)) {
+                        const start = Math.max(0, i - windowSize);
+                        const end = Math.min(words.length, i + windowSize + 1);
+                        
+                        for (let j = start; j < end; j++) {
+                            if (i !== j && vocabulary.has(words[j])) {
+                                const pair = `${word}:${words[j]}`;
+                                cooccurrence.set(pair, (cooccurrence.get(pair) || 0) + 1);
+                            }
+                        }
+                    }
+                });
+
+                // Generate pseudo-embeddings based on co-occurrence
+                let idx = 0;
+                vocabulary.forEach((vocabIdx, word) => {
+                    if (idx < vector.length) {
+                        let score = 0;
+                        cooccurrence.forEach((count, pair) => {
+                            if (pair.includes(word)) {
+                                score += count * Math.random() * sensitivity;
+                            }
+                        });
+                        vector[idx] = score;
+                        idx++;
+                    }
+                });
+
+                return this.normalizeVector(vector);
+            }
+
+            static createSemanticHash(document, allDocuments, sensitivity = 1.0) {
+                const words = this.tokenize(document);
+                const hashSize = Math.min(vocabulary.size, 128);
+                const vector = new Array(hashSize).fill(0);
+                
+                // Create semantic hash using rolling hash and word positions
+                let hash = 0;
+                const prime = 31;
+                
+                words.forEach((word, position) => {
+                    if (vocabulary.has(word)) {
+                        const wordHash = this.stringHash(word);
+                        const positionWeight = 1 + (position / words.length);
+                        hash = (hash * prime + wordHash * positionWeight) % hashSize;
+                        
+                        // Distribute hash across vector dimensions
+                        for (let i = 0; i < Math.min(5, hashSize); i++) {
+                            const dim = (hash + i * wordHash) % hashSize;
+                            vector[dim] += Math.pow(positionWeight * sensitivity, 0.5);
+                        }
+                    }
+                });
+
+                return this.normalizeVector(vector);
+            }
+
+            static tokenize(text) {
+                return text.toLowerCase()
+                    .replace(/[^\w\s]/g, ' ')
+                    .split(/\s+/)
+                    .filter(word => word.length > 1);
+            }
+
+            static generateNgrams(words, n) {
+                const ngrams = [];
+                for (let i = 0; i <= words.length - n; i++) {
+                    ngrams.push(words.slice(i, i + n).join('_'));
+                }
+                return ngrams;
+            }
+
+            static stringHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return Math.abs(hash);
+            }
+
+            static normalizeVector(vector) {
+                const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+                if (magnitude > 0) {
+                    return vector.map(val => val / magnitude);
+                }
+                return vector;
+            }
+
+            static calculateEnhancedCosineSimilarity(vector1, vector2, boost = 1.0) {
+                let dotProduct = 0;
+                let norm1 = 0;
+                let norm2 = 0;
+                let nonZeroCount = 0;
+
+                for (let i = 0; i < Math.min(vector1.length, vector2.length); i++) {
+                    if (vector1[i] !== 0 || vector2[i] !== 0) {
+                        nonZeroCount++;
+                    }
+                    dotProduct += vector1[i] * vector2[i];
+                    norm1 += vector1[i] * vector1[i];
+                    norm2 += vector2[i] * vector2[i];
+                }
+
+                if (norm1 === 0 || norm2 === 0) return 0;
+                
+                const baseSimilarity = dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+                const dimensionBoost = Math.log(1 + nonZeroCount) / Math.log(vector1.length + 1);
+                
+                return Math.pow(Math.max(0, baseSimilarity), boost) * (1 + dimensionBoost * 0.1);
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadPresetCorpus('diverse');
+        });
+
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', function() {
+                if (this.value.length > 2) {
+                    debounce(performLiveSearch, 300)();
+                }
+            });
+        }
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function() {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(func, delay);
+            };
+        }
+
+        function updateRangeValue(inputId, labelId) {
+            const value = document.getElementById(inputId).value;
+            document.getElementById(labelId).textContent = value;
+        }
+
+        function updateEmbeddingMethod() {
+            embeddingMethod = document.getElementById('embeddingMethod').value;
+            if (vectorDatabase.length > 0) {
+                processCorpus(); // Rebuild with new method
+            }
+        }
+
+        function updateProgress(percent) {
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+
+        function loadPresetCorpus(type) {
+            if (type === 'custom') {
+                document.getElementById('corpusInput').value = '';
+                document.getElementById('corpusInput').focus();
+                return;
+            }
+
+            const corpus = presetCorpora[type];
+            if (corpus) {
+                document.getElementById('corpusInput').value = corpus;
+                processCorpus();
+            }
+        }
+
+        async function processCorpus() {
+            const corpusText = document.getElementById('corpusInput').value.trim();
+            if (!corpusText) {
+                alert('Please enter some text to process!');
+                return;
+            }
+
+            showProcessing(true);
+            updateProgress(0);
+
+            try {
+                // Split text into documents
+                const documents = corpusText.split('\n').filter(doc => doc.trim().length > 10);
+                
+                if (documents.length < 3) {
+                    alert('Please provide at least 3 substantial paragraphs for meaningful vector analysis.');
+                    showProcessing(false);
+                    return;
+                }
+                
+                await buildEnhancedVectorDatabase(documents);
+                
+                updateStats();
+                updateProgress(100);
+                showProcessing(false);
+                
+                document.getElementById('searchResults').innerHTML = `
+                    <div style="text-align: center; color: #28a745; padding: 20px;">
+                        <h4>✅ Enhanced Vector Database Built Successfully!</h4>
+                        <p>Processed ${documents.length} documents with ${vocabulary.size} unique terms.</p>
+                        <p>Using ${embeddingMethod} embedding method.</p>
+                        <p>Ready for advanced semantic search!</p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error processing corpus:', error);
+                showProcessing(false);
+                updateProgress(0);
+                alert('Error processing corpus. Please try again.');
+            }
+        }
+
+        async function buildEnhancedVectorDatabase(documents) {
+            vectorDatabase = [];
+            vocabulary.clear();
+            documentVectors = [];
+
+            updateProgress(20);
+
+            // Enhanced vocabulary building with better filtering
+            const wordCounts = new Map();
+            documents.forEach(doc => {
+                const words = VectorEmbedding.tokenize(doc);
+                words.forEach(word => {
+                    wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
+                });
+            });
+
+            // Filter vocabulary more intelligently
+            let index = 0;
+            const minFreq = Math.max(1, Math.floor(documents.length * 0.1));
+            const maxFreq = Math.floor(documents.length * 0.8);
+            
+            wordCounts.forEach((count, word) => {
+                if (count >= minFreq && count <= maxFreq && word.length > 2) {
+                    vocabulary.set(word, index++);
+                }
+            });
+
+            updateProgress(50);
+
+            // Get sensitivity and n-gram settings
+            vectorSensitivity = parseFloat(document.getElementById('vectorSensitivity').value);
+            ngramSize = parseInt(document.getElementById('ngramSize').value);
+
+            // Create enhanced document vectors
+            documents.forEach((doc, docIndex) => {
+                let vector;
+                
+                switch (embeddingMethod) {
+                    case 'enhanced-tfidf':
+                        vector = VectorEmbedding.createEnhancedTFIDF(doc, documents, vectorSensitivity);
+                        break;
+                    case 'ngram-tfidf':
+                        vector = VectorEmbedding.createNgramTFIDF(doc, documents, ngramSize, vectorSensitivity);
+                        break;
+                    case 'word2vec-sim':
+                        vector = VectorEmbedding.createWord2VecSimulation(doc, documents, vectorSensitivity);
+                        break;
+                    case 'semantic-hash':
+                        vector = VectorEmbedding.createSemanticHash(doc, documents, vectorSensitivity);
+                        break;
+                    default:
+                        vector = VectorEmbedding.createEnhancedTFIDF(doc, documents, vectorSensitivity);
+                }
+                
+                vectorDatabase.push({
+                    id: docIndex,
+                    text: doc,
+                    vector: vector,
+                    wordCount: doc.split(' ').length,
+                    preview: doc.substring(0, 120) + (doc.length > 120 ? '...' : ''),
+                    sentiment: analyzeSentiment(doc)
+                });
+                
+                documentVectors.push(vector);
+            });
+
+            updateProgress(80);
+            await storeInIndexedDB();
+            updateProgress(100);
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            if (vectorDatabase.length === 0) {
+                alert('Please build the vector database first!');
+                return;
+            }
+
+            showProcessing(true);
+            currentQuery = query;
+
+            try {
+                // Create enhanced query vector
+                const queryVector = createQueryVector(query);
+                
+                // Calculate enhanced similarities
+                const results = vectorDatabase.map(doc => ({
+                    ...doc,
+                    similarity: VectorEmbedding.calculateEnhancedCosineSimilarity(
+                        queryVector, 
+                        doc.vector, 
+                        vectorSensitivity * 0.5
+                    )
+                }))
+                .filter(doc => doc.similarity > parseFloat(document.getElementById('similarityThreshold').value))
+                .sort((a, b) => b.similarity - a.similarity)
+                .slice(0, parseInt(document.getElementById('resultCount').value));
+
+                displayEnhancedSearchResults(results, queryVector);
+                addToQueryHistory(query, results.length);
+                generateEnhancedHeatmap(results);
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('Error performing search. Please try again.');
+            }
+
+            showProcessing(false);
+        }
+
+        function createQueryVector(query) {
+            switch (embeddingMethod) {
+                case 'enhanced-tfidf':
+                    return VectorEmbedding.createEnhancedTFIDF(query, [query, ...vectorDatabase.map(doc => doc.text)], vectorSensitivity);
+                case 'ngram-tfidf':
+                    return VectorEmbedding.createNgramTFIDF(query, [query, ...vectorDatabase.map(doc => doc.text)], ngramSize, vectorSensitivity);
+                case 'word2vec-sim':
+                    return VectorEmbedding.createWord2VecSimulation(query, [query, ...vectorDatabase.map(doc => doc.text)], vectorSensitivity);
+                case 'semantic-hash':
+                    return VectorEmbedding.createSemanticHash(query, [query, ...vectorDatabase.map(doc => doc.text)], vectorSensitivity);
+                default:
+                    return VectorEmbedding.createEnhancedTFIDF(query, [query, ...vectorDatabase.map(doc => doc.text)], vectorSensitivity);
+            }
+        }
+
+        function performFuzzySearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query || vectorDatabase.length === 0) return;
+
+            // Implement fuzzy matching with edit distance
+            const results = vectorDatabase.map(doc => {
+                const words = VectorEmbedding.tokenize(doc.text);
+                const queryWords = VectorEmbedding.tokenize(query);
+                
+                let maxSimilarity = 0;
+                queryWords.forEach(qWord => {
+                    words.forEach(dWord => {
+                        const editSim = 1 - (levenshteinDistance(qWord, dWord) / Math.max(qWord.length, dWord.length));
+                        maxSimilarity = Math.max(maxSimilarity, editSim);
+                    });
+                });
+                
+                return { ...doc, similarity: maxSimilarity * 0.8 }; // Scale down fuzzy matches
+            })
+            .filter(doc => doc.similarity > 0.3)
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, parseInt(document.getElementById('resultCount').value));
+
+            displayEnhancedSearchResults(results, null);
+        }
+
+        function performSemanticExpansion() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query || vectorDatabase.length === 0) return;
+
+            // Expand query with related terms
+            const queryWords = VectorEmbedding.tokenize(query);
+            const expandedTerms = new Set(queryWords);
+            
+            // Find semantically related words
+            queryWords.forEach(qWord => {
+                vocabulary.forEach((idx, word) => {
+                    if (word !== qWord && (
+                        word.includes(qWord.substring(0, 4)) || 
+                        qWord.includes(word.substring(0, 4)) ||
+                        levenshteinDistance(qWord, word) <= 2
+                    )) {
+                        expandedTerms.add(word);
+                    }
+                });
+            });
+
+            const expandedQuery = Array.from(expandedTerms).join(' ');
+            document.getElementById('searchInput').value = expandedQuery;
+            performSearch();
+        }
+
+        function performSimilarityRanking() {
+            if (vectorDatabase.length === 0) return;
+
+            // Show top similar document pairs
+            const similarities = [];
+            for (let i = 0; i < vectorDatabase.length; i++) {
+                for (let j = i + 1; j < vectorDatabase.length; j++) {
+                    const sim = VectorEmbedding.calculateEnhancedCosineSimilarity(
+                        vectorDatabase[i].vector,
+                        vectorDatabase[j].vector,
+                        vectorSensitivity * 0.5
+                    );
+                    similarities.push({
+                        doc1: vectorDatabase[i],
+                        doc2: vectorDatabase[j],
+                        similarity: sim
+                    });
+                }
+            }
+
+            similarities.sort((a, b) => b.similarity - a.similarity);
+            const topPairs = similarities.slice(0, 5);
+
+            let html = '<h4>🏆 Most Similar Document Pairs</h4>';
+            topPairs.forEach((pair, idx) => {
+                html += `
+                    <div class="document-card" style="margin: 10px 0; padding: 10px;">
+                        <div style="font-size: 11px; color: #666;">
+                            <strong>Pair ${idx + 1}:</strong> Doc ${pair.doc1.id + 1} ↔ Doc ${pair.doc2.id + 1}
+                        </div>
+                        <div class="similarity-bar">
+                            <div class="similarity-fill" style="width: ${pair.similarity * 100}%"></div>
+                        </div>
+                        <div style="font-size: 10px; margin-top: 5px;">
+                            Similarity: ${(pair.similarity * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('searchResults').innerHTML = html;
+        }
+
+        function performLiveSearch() {
+            if (vectorDatabase.length > 0) {
+                performSearch();
+            }
+        }
+
+        function displayEnhancedSearchResults(results, queryVector) {
+            const container = document.getElementById('searchResults');
+            
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #dc3545; padding: 20px;">
+                        <h4>🔍 No Results Found</h4>
+                        <p>Try adjusting your query, lowering the similarity threshold, or using fuzzy search.</p>
+                        <div class="interactive-controls" style="margin-top: 15px;">
+                            <button class="control-btn" onclick="document.getElementById('similarityThreshold').value = '0.01'; updateRangeValue('similarityThreshold', 'thresholdLabel'); performSearch();">Lower Threshold</button>
+                            <button class="control-btn" onclick="performFuzzySearch();">Try Fuzzy</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<h4>🎯 Enhanced Search Results for: "${currentQuery}"</h4>`;
+            
+            results.forEach((result, index) => {
+                const sentimentEmoji = result.sentiment > 0.1 ? '😊' : result.sentiment < -0.1 ? '😔' : '😐';
+                html += `
+                    <div class="document-card" onclick="selectDocument(${result.id}, ${result.similarity})">
+                        <div class="document-preview">${result.preview}</div>
+                        <div class="similarity-bar">
+                            <div class="similarity-fill" style="width: ${result.similarity * 100}%"></div>
+                        </div>
+                        <div class="document-meta">
+                            <span>Doc ${result.id + 1} • ${result.wordCount} words ${sentimentEmoji}</span>
+                            <span class="similarity-score">${(result.similarity * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            if (queryVector) {
+                displayEnhancedVectorAnalysis(queryVector, results[0]);
+            }
+        }
+
+        function selectDocument(docId, similarity) {
+            selectedDocument = vectorDatabase[docId];
+            
+            document.querySelectorAll('.document-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+
+            displayEnhancedDocumentDetails(selectedDocument, similarity);
+        }
+
+        function displayEnhancedDocumentDetails(document, similarity) {
+            const container = document.getElementById('documentDetails');
+            
+            const sentimentLabel = document.sentiment > 0.1 ? 'Positive 😊' : 
+                                 document.sentiment < -0.1 ? 'Negative 😔' : 'Neutral 😐';
+            
+            container.innerHTML = `
+                <h4>📋 Document ${document.id + 1} Deep Analysis</h4>
+                <div style="margin: 15px 0;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
+                        <div><strong>Similarity:</strong> ${(similarity * 100).toFixed(2)}%</div>
+                        <div><strong>Words:</strong> ${document.wordCount}</div>
+                        <div><strong>Sentiment:</strong> ${sentimentLabel}</div>
+                        <div><strong>Vector Norm:</strong> ${document.vector.reduce((sum, v) => sum + v*v, 0).toFixed(3)}</div>
+                    </div>
+                </div>
+                <div style="margin: 15px 0;">
+                    <strong>Full Content:</strong>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; font-size: 12px; margin-top: 5px; max-height: 150px; overflow-y: auto;">
+                        ${document.text}
+                    </div>
+                </div>
+                <div style="margin: 15px 0;">
+                    <strong>Vector Visualization (Top 24 dimensions):</strong>
+                    <div class="vector-display">
+                        ${document.vector.slice(0, 24).map((val, idx) => {
+                            const intensity = Math.abs(val);
+                            const opacity = Math.min(1, intensity * 3);
+                            return `<div class="vector-component ${val > 0 ? 'positive' : val < 0 ? 'negative' : ''}" 
+                                         style="opacity: ${opacity}" 
+                                         title="Dim ${idx}: ${val.toFixed(4)}">${val.toFixed(2)}</div>`;
+                        }).join('')}
+                        ${document.vector.length > 24 ? `<div style="text-align: center; grid-column: 1 / -1; color: #666; font-size: 10px;">...and ${document.vector.length - 24} more dimensions</div>` : ''}
+                    </div>
+                </div>
+                <div class="interactive-controls">
+                    <button class="control-btn" onclick="findSimilarDocuments(${document.id})">Find Similar</button>
+                    <button class="control-btn" onclick="analyzeDocumentClusters(${document.id})">Cluster Analysis</button>
+                </div>
+            `;
+        }
+
+        function displayEnhancedVectorAnalysis(queryVector, topResult) {
+            const container = document.getElementById('vectorAnalysis');
+            
+            if (!topResult) return;
+
+            const vectorStats = {
+                queryNorm: Math.sqrt(queryVector.reduce((sum, v) => sum + v*v, 0)),
+                resultNorm: Math.sqrt(topResult.vector.reduce((sum, v) => sum + v*v, 0)),
+                dotProduct: queryVector.reduce((sum, v, i) => sum + v * topResult.vector[i], 0),
+                nonZeroDims: queryVector.filter(v => Math.abs(v) > 0.001).length
+            };
+
+            container.innerHTML = `
+                <h4>🧠 Advanced Vector Analysis</h4>
+                <div class="vector-visualization">
+                    <strong>Query: "${currentQuery}"</strong>
+                    <div style="font-size: 10px; color: #666; margin: 5px 0;">
+                        Norm: ${vectorStats.queryNorm.toFixed(3)} | Non-zero dims: ${vectorStats.nonZeroDims}
+                    </div>
+                    <div class="vector-display">
+                        ${queryVector.slice(0, 20).map((val, idx) => {
+                            const intensity = Math.abs(val);
+                            const opacity = Math.min(1, intensity * 4);
+                            return `<div class="vector-component ${val > 0 ? 'positive' : val < 0 ? 'negative' : ''}" 
+                                         style="opacity: ${opacity}"
+                                         title="Query Dim ${idx}: ${val.toFixed(4)}">${val.toFixed(2)}</div>`;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <div class="vector-visualization">
+                    <strong>Top Match Vector (Doc ${topResult.id + 1})</strong>
+                    <div style="font-size: 10px; color: #666; margin: 5px 0;">
+                        Dot Product: ${vectorStats.dotProduct.toFixed(4)} | Cosine Sim: ${(topResult.similarity * 100).toFixed(2)}%
+                    </div>
+                    <div class="vector-display">
+                        ${topResult.vector.slice(0, 20).map((val, idx) => {
+                            const intensity = Math.abs(val);
+                            const opacity = Math.min(1, intensity * 4);
+                            const isHighMatch = Math.abs(queryVector[idx] * val) > 0.01;
+                            return `<div class="vector-component ${val > 0 ? 'positive' : val < 0 ? 'negative' : ''}" 
+                                         style="opacity: ${opacity}; ${isHighMatch ? 'border: 2px solid #fff;' : ''}"
+                                         title="Result Dim ${idx}: ${val.toFixed(4)} (Match strength: ${(queryVector[idx] * val).toFixed(4)})">${val.toFixed(2)}</div>`;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <strong>Embedding Method:</strong> ${embeddingMethod}<br>
+                    <strong>Sensitivity:</strong> ${vectorSensitivity}x<br>
+                    <strong>Vector Dimensions:</strong> ${queryVector.length}
+                </div>
+            `;
+        }
+
+        function generateEnhancedHeatmap(results) {
+            const container = document.getElementById('similarityHeatmap');
+            
+            if (results.length < 2) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #666;">
+                        <p>Need at least 2 results for heatmap visualization</p>
+                        <div class="interactive-controls">
+                            <button class="control-btn" onclick="document.getElementById('resultCount').value = 10; updateRangeValue('resultCount', 'resultCountLabel'); performSearch();">Get More Results</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const size = Math.min(results.length, 8);
+            const gridCols = Math.min(size, 8);
+            
+            container.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
+            
+            let html = '';
+            let totalSimilarity = 0;
+            let pairCount = 0;
+
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    let sim;
+                    if (i === j) {
+                        sim = 1.0;
+                    } else {
+                        sim = VectorEmbedding.calculateEnhancedCosineSimilarity(
+                            results[i].vector, 
+                            results[j].vector, 
+                            vectorSensitivity * 0.5
+                        );
+                        totalSimilarity += sim;
+                        pairCount++;
+                    }
+                    
+                    // Enhanced color mapping
+                    const hue = 240 - (sim * 120); // Blue to red spectrum
+                    const saturation = 70 + (sim * 30);
+                    const lightness = 30 + (sim * 40);
+                    const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    
+                    html += `<div class="heatmap-cell" 
+                                 style="background-color: ${color}" 
+                                 data-tooltip="Doc ${i+1} ↔ Doc ${j+1}: ${(sim * 100).toFixed(1)}%"
+                                 onclick="selectDocumentPair(${results[i].id}, ${results[j].id})">${Math.round(sim * 100)}</div>`;
+                }
+            }
+            
+            container.innerHTML = html;
+            
+            // Update average similarity stat
+            if (pairCount > 0) {
+                const avgSim = totalSimilarity / pairCount;
+                document.getElementById('avgSimilarity').textContent = (avgSim * 100).toFixed(1) + '%';
+            }
+        }
+
+        function selectDocumentPair(docId1, docId2) {
+            if (docId1 === docId2) {
+                selectDocument(docId1, 1.0);
+                return;
+            }
+            
+            const doc1 = vectorDatabase[docId1];
+            const doc2 = vectorDatabase[docId2];
+            const similarity = VectorEmbedding.calculateEnhancedCosineSimilarity(
+                doc1.vector, doc2.vector, vectorSensitivity * 0.5
+            );
+            
+            const container = document.getElementById('documentDetails');
+            container.innerHTML = `
+                <h4>📊 Document Pair Analysis</h4>
+                <div style="margin: 15px 0;">
+                    <strong>Documents:</strong> ${docId1 + 1} ↔ ${docId2 + 1}<br>
+                    <strong>Similarity:</strong> ${(similarity * 100).toFixed(2)}%
+                </div>
+                <div class="document-card" style="margin: 10px 0; font-size: 11px;">
+                    <strong>Doc ${docId1 + 1}:</strong><br>
+                    ${doc1.preview}
+                </div>
+                <div class="document-card" style="margin: 10px 0; font-size: 11px

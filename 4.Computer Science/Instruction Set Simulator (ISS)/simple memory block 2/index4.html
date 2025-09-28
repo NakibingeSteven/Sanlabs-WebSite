@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Block Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .memory-block {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            width: 360px; /* Adjust width as needed */
+        }
+
+        .memory-row {
+            display: flex;
+            gap: 5px;
+        }
+
+        .memory-cell {
+            width: 20px;
+            height: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 12px;
+            user-select: none; /* Prevent text selection */
+        }
+
+        .memory-cell:hover {
+            background-color: #e0e0e0;
+        }
+
+        .memory-select {
+            margin-left: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            width: 200px;
+        }
+
+        .memory-select h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .memory-select p {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="memory-block">
+        <!-- Three rows of 20 memory cells each -->
+        <div class="memory-row">
+            <!-- First row -->
+            <div class="memory-cell" data-address="0x00">00</div>
+            <div class="memory-cell" data-address="0x01">01</div>
+            <div class="memory-cell" data-address="0x02">02</div>
+            <div class="memory-cell" data-address="0x03">03</div>
+            <div class="memory-cell" data-address="0x04">04</div>
+            <div class="memory-cell" data-address="0x05">05</div>
+            <div class="memory-cell" data-address="0x06">06</div>
+            <div class="memory-cell" data-address="0x07">07</div>
+            <div class="memory-cell" data-address="0x08">08</div>
+            <div class="memory-cell" data-address="0x09">09</div>
+            <div class="memory-cell" data-address="0x0A">0A</div>
+            <div class="memory-cell" data-address="0x0B">0B</div>
+            <div class="memory-cell" data-address="0x0C">0C</div>
+            <div class="memory-cell" data-address="0x0D">0D</div>
+            <div class="memory-cell" data-address="0x0E">0E</div>
+            <div class="memory-cell" data-address="0x0F">0F</div>
+            <div class="memory-cell" data-address="0x10">10</div>
+            <div class="memory-cell" data-address="0x11">11</div>
+            <div class="memory-cell" data-address="0x12">12</div>
+            <div class="memory-cell" data-address="0x13">13</div>
+        </div>
+        <div class="memory-row">
+            <!-- Second row -->
+            <div class="memory-cell" data-address="0x14">14</div>
+            <div class="memory-cell" data-address="0x15">15</div>
+            <div class="memory-cell" data-address="0x16">16</div>
+            <div class="memory-cell" data-address="0x17">17</div>
+            <div class="memory-cell" data-address="0x18">18</div>
+            <div class="memory-cell" data-address="0x19">19</div>
+            <div class="memory-cell" data-address="0x1A">1A</div>
+            <div class="memory-cell" data-address="0x1B">1B</div>
+            <div class="memory-cell" data-address="0x1C">1C</div>
+            <div class="memory-cell" data-address="0x1D">1D</div>
+            <div class="memory-cell" data-address="0x1E">1E</div>
+            <div class="memory-cell" data-address="0x1F">1F</div>
+            <div class="memory-cell" data-address="0x20">20</div>
+            <div class="memory-cell" data-address="0x21">21</div>
+            <div class="memory-cell" data-address="0x22">22</div>
+            <div class="memory-cell" data-address="0x23">23</div>
+            <div class="memory-cell" data-address="0x24">24</div>
+            <div class="memory-cell" data-address="0x25">25</div>
+            <div class="memory-cell" data-address="0x26">26</div>
+            <div class="memory-cell" data-address="0x27">27</div>
+        </div>
+        <div class="memory-row">
+            <!-- Third row -->
+            <div class="memory-cell" data-address="0x28">28</div>
+            <div class="memory-cell" data-address="0x29">29</div>
+            <div class="memory-cell" data-address="0x2A">2A</div>
+            <div class="memory-cell" data-address="0x2B">2B</div>
+            <div class="memory-cell" data-address="0x2C">2C</div>
+            <div class="memory-cell" data-address="0x2D">2D</div>
+            <div class="memory-cell" data-address="0x2E">2E</div>
+            <div class="memory-cell" data-address="0x2F">2F</div>
+            <div class="memory-cell" data-address="0x30">30</div>
+            <div class="memory-cell" data-address="0x31">31</div>
+            <div class="memory-cell" data-address="0x32">32</div>
+            <div class="memory-cell" data-address="0x33">33</div>
+            <div class="memory-cell" data-address="0x34">34</div>
+            <div class="memory-cell" data-address="0x35">35</div>
+            <div class="memory-cell" data-address="0x36">36</div>
+            <div class="memory-cell" data-address="0x37">37</div>
+            <div class="memory-cell" data-address="0x38">38</div>
+            <div class="memory-cell" data-address="0x39">39</div>
+            <div class="memory-cell" data-address="0x3A">3A</div>
+            <div class="memory-cell" data-address="0x3B">3B</div>
+        </div>
+    </div>
+    <div class="memory-select">
+        <h2>Memory Select</h2>
+        <p id="memory-address">Memory Address: </p>
+        <p id="memory-value">Memory Value: </p>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cells = document.querySelectorAll('.memory-cell');
+            const memoryAddressDisplay = document.getElementById('memory-address');
+            const memoryValueDisplay = document.getElementById('memory-value');
+
+            cells.forEach(cell => {
+                cell.addEventListener('click', function() {
+                    // Toggle binary value (0 or 1)
+                    let currentValue = this.textContent;
+                    let newValue = currentValue === '0' ? '1' : '0';
+                    this.textContent = newValue;
+
+                    // Get memory address from data attribute
+                    let memoryAddress = this.getAttribute('data-address');
+
+                    // Display memory address and value
+                    memoryAddressDisplay.textContent = 'Memory Address: ' + memoryAddress;
+                    memoryValueDisplay.textContent = 'Memory Value: ' + newValue;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

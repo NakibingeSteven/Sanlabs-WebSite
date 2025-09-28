@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DH Parameters Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+            max-width: 600px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>DH Parameters Calculator</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>θ (theta)</td>
+                <td><input type="number" id="theta" name="theta" step="any"></td>
+            </tr>
+            <tr>
+                <td>d (link offset)</td>
+                <td><input type="number" id="d" name="d" step="any"></td>
+            </tr>
+            <tr>
+                <td>a (link length)</td>
+                <td><input type="number" id="a" name="a" step="any"></td>
+            </tr>
+            <tr>
+                <td>α (alpha)</td>
+                <td><input type="number" id="alpha" name="alpha" step="any"></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <button type="button" onclick="calculateTransformationMatrix()">Calculate</button>
+    
+    <h2>Transformation Matrix</h2>
+    <table id="transformation-matrix">
+        <tbody>
+            <tr>
+                <td id="m11">0</td>
+                <td id="m12">0</td>
+                <td id="m13">0</td>
+                <td id="m14">0</td>
+            </tr>
+            <tr>
+                <td id="m21">0</td>
+                <td id="m22">0</td>
+                <td id="m23">0</td>
+                <td id="m24">0</td>
+            </tr>
+            <tr>
+                <td id="m31">0</td>
+                <td id="m32">0</td>
+                <td id="m33">0</td>
+                <td id="m34">0</td>
+            </tr>
+            <tr>
+                <td id="m41">0</td>
+                <td id="m42">0</td>
+                <td id="m43">0</td>
+                <td id="m44">1</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        function calculateTransformationMatrix() {
+            // Retrieve input values
+            let theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
+            let d = parseFloat(document.getElementById('d').value);
+            let a = parseFloat(document.getElementById('a').value);
+            let alpha = parseFloat(document.getElementById('alpha').value) * Math.PI / 180;
+
+            // Calculate the elements of the transformation matrix
+            let m11 = Math.cos(theta);
+            let m12 = -Math.sin(theta) * Math.cos(alpha);
+            let m13 = Math.sin(theta) * Math.sin(alpha);
+            let m14 = a * Math.cos(theta);
+            
+            let m21 = Math.sin(theta);
+            let m22 = Math.cos(theta) * Math.cos(alpha);
+            let m23 = -Math.cos(theta) * Math.sin(alpha);
+            let m24 = a * Math.sin(theta);
+            
+            let m31 = 0;
+            let m32 = Math.sin(alpha);
+            let m33 = Math.cos(alpha);
+            let m34 = d;
+            
+            let m41 = 0;
+            let m42 = 0;
+            let m43 = 0;
+            let m44 = 1;
+            
+            // Display the matrix
+            document.getElementById('m11').textContent = m11.toFixed(4);
+            document.getElementById('m12').textContent = m12.toFixed(4);
+            document.getElementById('m13').textContent = m13.toFixed(4);
+            document.getElementById('m14').textContent = m14.toFixed(4);
+            
+            document.getElementById('m21').textContent = m21.toFixed(4);
+            document.getElementById('m22').textContent = m22.toFixed(4);
+            document.getElementById('m23').textContent = m23.toFixed(4);
+            document.getElementById('m24').textContent = m24.toFixed(4);
+            
+            document.getElementById('m31').textContent = m31.toFixed(4);
+            document.getElementById('m32').textContent = m32.toFixed(4);
+            document.getElementById('m33').textContent = m33.toFixed(4);
+            document.getElementById('m34').textContent = m34.toFixed(4);
+            
+            document.getElementById('m41').textContent = m41.toFixed(4);
+            document.getElementById('m42').textContent = m42.toFixed(4);
+            document.getElementById('m43').textContent = m43.toFixed(4);
+            document.getElementById('m44').textContent = m44.toFixed(4);
+        }
+    </script>
+</body>
+</html>

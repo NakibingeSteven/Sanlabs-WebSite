@@ -1,0 +1,10 @@
+make grpahs
+make for diffrent devices
+  car braking
+  motors
+  temperatue contro
+
+p controller
+i controller
+d controllers
+pi controller

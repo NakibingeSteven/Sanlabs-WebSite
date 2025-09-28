@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DH Parameters Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+            max-width: 600px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .section h3 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>DH Parameters Calculator</h1>
+    <p>To extend the application to handle multiple links for an 
+        𝑛
+        n-link robot, we can dynamically add new sections for entering DH parameters and calculate the transformation matrices for each link. Here's how you can achieve this:</p>
+    <div id="sections">
+        <!-- Sections will be added here -->
+    </div>
+    <button onclick="addLinkSection()">Add Link</button>
+    <button onclick="calculateAllTransformations()">Calculate All</button>
+    
+    <script>
+        let linkCount = 0;
+
+        function addLinkSection() {
+            linkCount++;
+            const section = document.createElement('div');
+            section.className = 'section';
+            section.id = `section${linkCount}`;
+            section.innerHTML = `
+                <h3>Link ${linkCount}</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>θ (theta)</td>
+                            <td><input type="number" id="theta${linkCount}" step="any"></td>
+                        </tr>
+                        <tr>
+                            <td>d (link offset)</td>
+                            <td><input type="number" id="d${linkCount}" step="any"></td>
+                        </tr>
+                        <tr>
+                            <td>a (link length)</td>
+                            <td><input type="number" id="a${linkCount}" step="any"></td>
+                        </tr>
+                        <tr>
+                            <td>α (alpha)</td>
+                            <td><input type="number" id="alpha${linkCount}" step="any"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h3>Transformation Matrix for Link ${linkCount}</h3>
+                <table id="transformation-matrix${linkCount}">
+                    <tbody>
+                        <tr>
+                            <td id="m${linkCount}11">0</td>
+                            <td id="m${linkCount}12">0</td>
+                            <td id="m${linkCount}13">0</td>
+                            <td id="m${linkCount}14">0</td>
+                        </tr>
+                        <tr>
+                            <td id="m${linkCount}21">0</td>
+                            <td id="m${linkCount}22">0</td>
+                            <td id="m${linkCount}23">0</td>
+                            <td id="m${linkCount}24">0</td>
+                        </tr>
+                        <tr>
+                            <td id="m${linkCount}31">0</td>
+                            <td id="m${linkCount}32">0</td>
+                            <td id="m${linkCount}33">0</td>
+                            <td id="m${linkCount}34">0</td>
+                        </tr>
+                        <tr>
+                            <td id="m${linkCount}41">0</td>
+                            <td id="m${linkCount}42">0</td>
+                            <td id="m${linkCount}43">0</td>
+                            <td id="m${linkCount}44">1</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('sections').appendChild(section);
+        }
+
+        function calculateTransformationMatrix(theta, d, a, alpha) {
+            let m11 = Math.cos(theta);
+            let m12 = -Math.sin(theta) * Math.cos(alpha);
+            let m13 = Math.sin(theta) * Math.sin(alpha);
+            let m14 = a * Math.cos(theta);
+
+            let m21 = Math.sin(theta);
+            let m22 = Math.cos(theta) * Math.cos(alpha);
+            let m23 = -Math.cos(theta) * Math.sin(alpha);
+            let m24 = a * Math.sin(theta);
+
+            let m31 = 0;
+            let m32 = Math.sin(alpha);
+            let m33 = Math.cos(alpha);
+            let m34 = d;
+
+            let m41 = 0;
+            let m42 = 0;
+            let m43 = 0;
+            let m44 = 1;
+
+            return [
+                [m11, m12, m13, m14],
+                [m21, m22, m23, m24],
+                [m31, m32, m33, m34],
+                [m41, m42, m43, m44]
+            ];
+        }
+
+        function displayTransformationMatrix(matrix, link) {
+            document.getElementById(`m${link}11`).textContent = matrix[0][0].toFixed(4);
+            document.getElementById(`m${link}12`).textContent = matrix[0][1].toFixed(4);
+            document.getElementById(`m${link}13`).textContent = matrix[0][2].toFixed(4);
+            document.getElementById(`m${link}14`).textContent = matrix[0][3].toFixed(4);
+            
+            document.getElementById(`m${link}21`).textContent = matrix[1][0].toFixed(4);
+            document.getElementById(`m${link}22`).textContent = matrix[1][1].toFixed(4);
+            document.getElementById(`m${link}23`).textContent = matrix[1][2].toFixed(4);
+            document.getElementById(`m${link}24`).textContent = matrix[1][3].toFixed(4);
+            
+            document.getElementById(`m${link}31`).textContent = matrix[2][0].toFixed(4);
+            document.getElementById(`m${link}32`).textContent = matrix[2][1].toFixed(4);
+            document.getElementById(`m${link}33`).textContent = matrix[2][2].toFixed(4);
+            document.getElementById(`m${link}34`).textContent = matrix[2][3].toFixed(4);
+            
+            document.getElementById(`m${link}41`).textContent = matrix[3][0].toFixed(4);
+            document.getElementById(`m${link}42`).textContent = matrix[3][1].toFixed(4);
+            document.getElementById(`m${link}43`).textContent = matrix[3][2].toFixed(4);
+            document.getElementById(`m${link}44`).textContent = matrix[3][3].toFixed(4);
+        }
+
+        function calculateAllTransformations() {
+            for (let i = 1; i <= linkCount; i++) {
+                let theta = parseFloat(document.getElementById(`theta${i}`).value) * Math.PI / 180;
+                let d = parseFloat(document.getElementById(`d${i}`).value);
+                let a = parseFloat(document.getElementById(`a${i}`).value);
+                let alpha = parseFloat(document.getElementById(`alpha${i}`).value) * Math.PI / 180;
+                let matrix = calculateTransformationMatrix(theta, d, a, alpha);
+                displayTransformationMatrix(matrix, i);
+            }
+        }
+    </script>
+</body>
+</html>

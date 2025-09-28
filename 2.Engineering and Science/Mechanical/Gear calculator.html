@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <m eta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <style>
+            tooltip {
+                position: relative;
+                display: inline-block;
+                border-bottom: 1px dotted black;
+            }
+
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 150px;
+                background-color: #f4f5fa;
+                color: black;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 3px;
+
+                /* Position the tooltip */
+                position: absolute;
+                z-index: 1;
+                top: -5px;
+                right: 105%;
+            }
+
+            @media (max-width: 720px) {
+                .tooltip .tooltiptext {
+                    width: 150px;
+                    top: 100%;
+                    left: 50%;
+                    margin-left: -75px;
+                    /* Use half of the width (150/2 = 75), to center the tooltip */
+                }
+            }
+
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+
+            label {
+                display: inline-block;
+                width: 275px;
+                text-align: right;
+
+            }
+
+            @media (max-width:720px) {
+                label {
+                    text-align: left;
+                }
+
+                .unitslabel {
+                    width: 40px;
+                }
+            }
+        </style>
+</head>
+
+<body>
+
+    <form>
+        <div style="margin-bottom:10px;">
+            <label for="input-units" class="unitslabel">Units</label>
+            <input type="radio" id="input-units-inch" value="mm" name="units" checked><label for="mm"
+                style="width:120px;padding-left:3px;padding-right:10px;">mm (Module)</label>
+            <input type="radio" id="input-units-mm" value="in" name="units"><label for="in"
+                style="width:200px;padding-left:6px;">1/inch (Diametral Pitch)</label>
+        </div>
+        <div style="margin-bottom:10px;">
+            <label for="input-units" class="unitslabel">Type</label>
+            <input type="radio" id="input-type-ext" value="ext" name="type" checked><label for="ext"
+                style="width:70px;padding-left:3px;">External</label>
+            <input type="radio" id="input-type-int" value="int" name="type"><label for="int"
+                style="width:65px;padding-left:3px;">Internal</label>
+        </div>
+        <div style="margin-bottom:10px;">
+            <label for="input-teeth">Number of Teeth*</label>
+            <input type="text" id="input-teeth" size="35" placeholder="Number of Teeth">
+        </div>
+
+        <div style="margin-bottom:10px;">
+            <label>
+                <div class="tooltip">DP/Module*<span class="tooltiptext">Module is in millimeters, DP is in
+                        1/inch</span>
+                </div>
+            </label>
+            <input type="text" id="input-module" size="35" placeholder="Module">
+
+        </div>
+        <div style="margin-bottom:10px;">
+            <label>
+                <div class="tooltip">Pressure Angle*<span class="tooltiptext">Common values: 20, 14.5, 25</span>
+                </div>
+            </label>
+            <input type="text" id="input-pangle" size="35" placeholder="Pressure Angle (degrees)">
+
+        </div>
+        <div style="margin-bottom:10px;">
+            <label for="precision">Number of Decimal Places</label>
+            <select name="precision" id="precision">
+                <option value="4">4</option>
+                <option value="8">8</option>
+                <option value="7">7</option>
+                <option value="6">6</option>
+                <option value="5">5</option>
+                <option value="4">4</option>
+                <option value="3">3</option>
+                <option value="2">2</option>
+                <option value="1">1</option>
+                <option value="0">0</option>
+            </select>
+
+        </div>
+
+        <div style="margin:auto; width:40%">
+            <button text="Calculate" id="button-calculate" onclick="calculate();return false;">Calculate</button>
+            <button text="Clear" id="button-clear" onclick="clearInputs();return false;">Clear</button>
+            <button text="Copy" id="button-copy" onclick="copyResults();return false;">Copy</button>
+        </div>
+        <div style="margin:0;width:80%">
+            <textarea cols="70" rows="22" id="areaResults"
+                style="margin-top:10px; font-family:'Courier New';tab-size:1;"></textarea>
+        </div>
+    </form>
+
+    <script>
+        var radioValue;
+        var unitWord;
+        var ODIDWord = "OD";
+
+        function formatDate(d) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            return d.getDate().toString().padStart(2, '0') + "-" + months[d.getMonth()] + "-" + d.getFullYear();
+        }
+
+        function logQA(message) {
+            //send the message. the message is an object, i.e.:
+            //const obj = {name: "John", age: 30, city: "New York"};
+            var client = new XMLHttpRequest();
+            client.open("POST", "https://oilviscositychart.com/logs/log.php");
+            client.setRequestHeader("Content-Type", "application/json");
+            client.send(JSON.stringify(message));
+
+        }
+        function copyResults() {
+            var copyText = document.getElementById('areaResults');
+            copyText.select();
+            //copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+            document.execCommand("copy");
+        }
+
+        document.getElementById('button-copy').onclick = function () {
+            copyResults();
+            return false;
+        }
+
+        document.getElementById('button-calculate').onclick = function () {
+            calculate();
+            return false;
+        }
+
+        document.getElementById('button-clear').onclick = function () {
+            document.getElementById('input-teeth').value = '';
+            document.getElementById('input-module').value = '';
+            document.getElementById('input-pangle').value = '';
+            return false;
+        }
+
+
+        document.getElementsByName('units')[0].onclick = function () {
+            radioValue = event.target.value;
+            console.log("radio");
+            console.log(radioValue);
+            if (radioValue === "in") {
+                document.getElementById('input-module').placeholder = "Diametral Pitch";
+            }
+            else {
+                //document.getElementById('#module').innerHTML = "Module";
+                document.getElementById('input-module').placeholder = "Module";
+            }
+        }
+        document.getElementsByName('units')[1].onclick = function () {
+            radioValue = event.target.value;
+            console.log("radio");
+            console.log(radioValue);
+            if (radioValue === "in") {
+                //document.getElementById('#module').innerHTML = "Diametral Pitch";
+                document.getElementById('input-module').placeholder = "Diametral Pitch";
+            }
+            else {
+                //document.getElementById('#module').innerHTML = "Module";
+                document.getElementById('input-module').placeholder = "Module";
+            }
+        }
+
+        var z;
+        var m_n;
+        var alpha_n_Degree;
+        var alpha_n; //= parseFloat(alpha_n_Degree)*Math.PI/180;
+        var precision;
+
+        function calculate() {
+
+            var numTeeth = parseFloat(document.getElementById('input-teeth').value);
+            var module = document.getElementById('input-module').value;
+            var pressureAngle = document.getElementById('input-pangle').value;
+            precision = document.getElementById('precision').value;
+
+            logQA({ 'page': "dimensions", 'numteeth': numTeeth, 'module': module, 'pangle': pressureAngle, 'param7': unitWord })
+
+            var errorMessage = "Error";
+            var okToCalc = true;
+
+            if (document.getElementsByName('type')[0].checked == document.getElementsByName('type')[1].checked) {
+                //Both Internal and External are the same (checked or unchecked)
+                okToCalc = false;
+                errorMessage = "Gear must be either Internal or External";
+            }
+
+            if (!(numTeeth >= 8 && numTeeth <= 368)) {
+                okToCalc = false;
+                errorMessage = errorMessage + "\n" + "Number of teeth must be between 8 and 368"
+            }
+            if (!(Number.isInteger(numTeeth))) {
+                okToCalc = false;
+                errorMessage = "Number of teeth must be an integer";
+            }
+            if (!(module >= 0.1 && module <= 256)) {
+                okToCalc = false;
+                errorMessage = errorMessage + "\n" + "Module/DP must be between 0.1 and 50"
+            }
+            if (!(pressureAngle >= 1 && pressureAngle <= 45)) {
+                okToCalc = false;
+                errorMessage = errorMessage + "\n" + "Pressure Angle must be between 1 and 45 degrees"
+            }
+            if (!(precision >= 0 && precision <= 8)) {
+                okToCalc = false;
+                errorMessage = errorMessage + "\n" + "Number of Decimal Places must be between 0 and 8"
+            }
+
+            if (okToCalc) {
+                calculateMOW()
+            }
+            else {
+                document.getElementById('areaResults').value = errorMessage;
+                //document.getElementById("#text10").innerHTML = errorMessage;
+            }
+
+
+
+        }
+        function calculateMOW() {
+
+            z = parseFloat(document.getElementById('input-teeth').value);
+            m_n = parseFloat(document.getElementById('input-module').value);
+            alpha_n_Degree = parseFloat(document.getElementById('input-pangle').value);
+            alpha_n = parseFloat(alpha_n_Degree) * Math.PI / 180;
+            precision = document.getElementById('precision').value;
+
+            if (document.getElementsByName('type')[1].checked) {
+                //check if the gear is internal
+                gearType = "Internal";
+                ODIDWord = "ID";
+            }
+            else {
+                gearType = "External";
+                ODIDWord = "OD";
+            }
+
+            var m_nInput = m_n;
+            var placeWord;
+            var unitConversion;
+            if (radioValue === "in") {
+                m_n = 25.4 / m_n;
+                unitWord = "inches"
+                modWord = "Diametral Pitch";
+                unitConversion = 1;
+            }
+            else {
+                unitWord = "millimeters"
+                modWord = "Module";
+                unitConversion = 25.4;
+            }
+
+            if (precision == 1) {
+                placeWord = "place";
+            }
+            else {
+                placeWord = "places";
+            }
+
+            ///BASIC GEAR DIMENSIONS
+
+            pitchDiameter = m_n * z * unitConversion / 25.4;
+            baseCircle = pitchDiameter * Math.cos(alpha_n);
+            diametralPitch = 25.4 / m_n;
+
+
+            addendum = 1 / diametralPitch * unitConversion;
+            dedendum = 1.250 / diametralPitch * unitConversion;
+            workingDepth = 2 / diametralPitch * unitConversion;
+            wholeDepth = 2.25 / diametralPitch * unitConversion; //(preferred)
+
+            if (gearType == "External") {
+                tipDiameter = pitchDiameter + 2 * addendum; // tip diameter
+                rootDiameter = tipDiameter - 2 * wholeDepth; // (preferred)
+            }
+            else {
+                tipDiameter = pitchDiameter - 2 * addendum;
+                rootDiameter = pitchDiameter + 2 * addendum;
+            }
+
+
+            var circularPitch = Math.PI / diametralPitch * unitConversion;
+            var toothThickness = circularPitch / 2; // nominally half the pitch is tooth, half is tooth space
+
+            var undercutThreshold = 2 / Math.sin(alpha_n) / Math.sin(alpha_n);
+            var undercutRisk = "No";
+            if (z <= undercutThreshold) {
+                undercutRisk = "Yes";
+            }
+            /* OLD
+            textToWrite = "Inputs\n" + "Units:\t" + unitWord + "\nNumber of Teeth:\t" + z + "\n" + modWord + ":\t" + m_nInput + "\nPressure Angle:\t" + alpha_n_Degree + "\n\nOutputs" + "\nPitch Diameter:\t" + pitchDiameter.toFixed(precision) + "\nOuter Diameter:\t" + tipDiameter.toFixed(precision) + "\nRoot Diameter:\t" + rootDiameter.toFixed(precision) + "\n\nBase Circle:\t" + baseCircle.toFixed(precision) + "\nAddendum:\t" + addendum.toFixed(precision) + "\nDedendum:\t" + dedendum.toFixed(precision) + "\nWorking Depth:\t" + workingDepth.toFixed(precision) + "\nWhole Depth:\t" + wholeDepth.toFixed(precision) + "\n\nAll units are in " + unitWord + ", to " + precision + " decimal " + placeWord;
+            */
+
+            if (radioValue == "in") {
+                // reset units to millimeters (to display both)
+                pitchDiameter = pitchDiameter * 25.4;
+                tipDiameter = tipDiameter * 25.4;
+                rootDiameter = rootDiameter * 25.4;
+                baseCircle = baseCircle * 25.4;
+                addendum = addendum * 25.4;
+                dedendum = dedendum * 25.4;
+                workingDepth = workingDepth * 25.4;
+                wholeDepth = wholeDepth * 25.4;
+                circularPitch = circularPitch * 25.4;
+                toothThickness = toothThickness * 25.4;
+            }
+
+            textToWrite = "Inputs" + "\nNumber of Teeth:\t" + z + "\n" + modWord + ":\t" + m_nInput + "\nPressure Angle:\t" + alpha_n_Degree + "\tdegrees" + "\nGear Type:\t" + gearType + "\n\nOutputs" + "\n" + ODIDWord + " Reference:  \t" + tipDiameter.toFixed(precision) + "\tmm\t" + (tipDiameter / 25.4).toFixed(precision) + "\tin" + "\nPitch Diameter:\t" + pitchDiameter.toFixed(precision) + "\tmm\t" + (pitchDiameter / 25.4).toFixed(precision) + "\tin" + "\nRoot Diameter: \t" + rootDiameter.toFixed(precision) + "\tmm\t" + (rootDiameter / 25.4).toFixed(precision) + "\tin" + "\n\nAddendum:       \t" + addendum.toFixed(precision) + "\tmm\t" + (addendum / 25.4).toFixed(precision) + "\tin" + "\nDedendum:       \t" + dedendum.toFixed(precision) + "\tmm\t" + (dedendum / 25.4).toFixed(precision) + "\tin" + "\nWorking Depth:  \t" + workingDepth.toFixed(precision) + "\tmm\t" + (workingDepth / 25.4).toFixed(precision) + "\tin" + "\nWhole Depth:    \t" + wholeDepth.toFixed(precision) + "\tmm\t" + (wholeDepth / 25.4).toFixed(precision) + "\tin" + "\nCircular Pitch: \t" + circularPitch.toFixed(precision) + "\tmm\t" + (circularPitch / 25.4).toFixed(precision) + "\tin" + "\nTooth Thickness:\t" + toothThickness.toFixed(precision) + "\tmm\t" + (toothThickness / 25.4).toFixed(precision) + "\tin" + "\nBase Circle:   \t" + baseCircle.toFixed(precision) + "\tmm\t" + (baseCircle / 25.4).toFixed(precision) + "\tin" + "\nUndercut:       \t" + undercutRisk + "\n\n\u00A9 " + new Date().getFullYear() + " Evolvent Design," + "\t" + formatDate(new Date()) + "\nhttps://evolventdesign.com/pages/blank-calc";
+            document.getElementById('areaResults').value = textToWrite;
+        }
+    </script>
+
+</body>
+
+</html>

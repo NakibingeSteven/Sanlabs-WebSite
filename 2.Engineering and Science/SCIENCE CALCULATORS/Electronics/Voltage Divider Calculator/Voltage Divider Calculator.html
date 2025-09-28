@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <script>
+        //
+        var v1Input = document.getElementById("v1");
+        var r1Input = document.getElementById("r1");
+        var r2Input = document.getElementById("r2");
+        var r3Input = document.getElementById("r3");
+
+        function VD() {
+            var rr1 = document.getElementById("r1").value;
+            var rr2 = document.getElementById("r2").value;
+            var rr3 = document.getElementById("r3").value;
+            var vv1 = document.getElementById("v1").value;
+
+            var vv2 = vv1 * rr2 / (rr1 - (-1) * rr2);
+            document.getElementById("v2").value = parseFloat(vv2.toFixed(10));
+            var rr2p = rr2 * rr3 / (rr2 - (-1) * rr3);
+            vv3 = vv1 * rr2p / (rr1 - (-1) * rr2p);
+            document.getElementById("v3").value = parseFloat(vv3.toFixed(10));
+            var ppo = vv3 * vv3 / rr3;
+            document.getElementById("po").value = parseFloat(ppo.toFixed(10));
+            var ppt = vv1 * vv1 / (rr1 - (-1) * rr2p);
+            document.getElementById("pt").value = parseFloat(ppt.toFixed(10));
+            percent = 100 * ppo / ppt;
+            document.getElementById("peff").value = parseFloat(percent.toFixed(10));
+        }
+
+        v1Input.addEventListener("change", VD);
+        r1Input.addEventListener("change", VD);
+        r2Input.addEventListener("change", VD);
+        r3Input.addEventListener("change", VD);
+
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,5 @@
+How to Use Them:
+For ESP32 Project: Use File 1 (upload to ESP32)
+For Testing UI: Open File 2 in your browser
+For Other Projects: Copy components from File 2
+For Enhanced Version: Replace the HTML in File 1 with content from File 2

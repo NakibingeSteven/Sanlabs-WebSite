@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P Controller Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Ensure full viewport height */
+        }
+        
+        .container {
+            background-color: #fff;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        .input-section {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .input-section > div {
+            flex: 1 1 700px; /* Each input section takes equal width */
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-section label {
+            flex: 0 0 140px; /* Fixed width for labels */
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .input-section input[type="number"] {
+            flex: 1; /* Input fields take remaining space */
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        .input-section button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            flex: 0 0 auto; /* Button takes its natural size */
+        }
+        
+        .input-section button:hover {
+            background-color: #45a049;
+        }
+        
+        #output {
+            margin-top: 20px;
+            max-height: calc(100vh - 200px); /* Adjust according to your layout */
+            overflow: auto; /* Enable vertical scroll if necessary */
+        }
+        
+        table {
+            width: 100%;

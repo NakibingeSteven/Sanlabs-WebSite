@@ -1,0 +1,9 @@
+Bulk Operations
+# Clear all cells (set them all to 0)
+10
+
+# Replace all cell values with 5
+11 5
+
+# Randomize all cell values (set them to random values between 0 and 100)
+12

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Block Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .memory-block {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            width: 800px; /* Adjust width as needed */
+        }
+
+        .memory-cell {
+            width: 80px;
+            height: 40px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .memory-cell:hover {
+            background-color: #e0e0e0;
+        }
+
+        .memory-select {
+            margin-left: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            width: 200px;
+        }
+
+        .memory-select h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .memory-select p {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="memory-block">
+        <!-- Memory cells with hexadecimal addresses -->
+        <div class="memory-cell" data-address="0x00">Cell 0</div>
+        <div class="memory-cell" data-address="0x01">Cell 1</div>
+        <div class="memory-cell" data-address="0x02">Cell 2</div>
+        <div class="memory-cell" data-address="0x03">Cell 3</div>
+        <div class="memory-cell" data-address="0x04">Cell 4</div>
+        <div class="memory-cell" data-address="0x05">Cell 5</div>
+        <div class="memory-cell" data-address="0x06">Cell 6</div>
+        <div class="memory-cell" data-address="0x07">Cell 7</div>
+        <div class="memory-cell" data-address="0x08">Cell 8</div>
+        <div class="memory-cell" data-address="0x09">Cell 9</div>
+        <div class="memory-cell" data-address="0x0A">Cell A</div>
+        <div class="memory-cell" data-address="0x0B">Cell B</div>
+        <div class="memory-cell" data-address="0x0C">Cell C</div>
+        <div class="memory-cell" data-address="0x0D">Cell D</div>
+        <div class="memory-cell" data-address="0x0E">Cell E</div>
+        <div class="memory-cell" data-address="0x0F">Cell F</div>
+        <div class="memory-cell" data-address="0x10">Cell 10</div>
+        <div class="memory-cell" data-address="0x11">Cell 11</div>
+        <div class="memory-cell" data-address="0x12">Cell 12</div>
+        <div class="memory-cell" data-address="0x13">Cell 13</div>
+        <div class="memory-cell" data-address="0x14">Cell 14</div>
+        <div class="memory-cell" data-address="0x15">Cell 15</div>
+        <div class="memory-cell" data-address="0x16">Cell 16</div>
+        <div class="memory-cell" data-address="0x17">Cell 17</div>
+        <div class="memory-cell" data-address="0x18">Cell 18</div>
+        <div class="memory-cell" data-address="0x19">Cell 19</div>
+    </div>
+    <div class="memory-select">
+        <h2>Memory Select</h2>
+        <p id="memory-address">Memory Address: </p>
+        <p id="memory-value">Memory Value: </p>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cells = document.querySelectorAll('.memory-cell');
+            const memoryAddressDisplay = document.getElementById('memory-address');
+            const memoryValueDisplay = document.getElementById('memory-value');
+
+            cells.forEach(cell => {
+                cell.addEventListener('click', function() {
+                    // Get memory address from data attribute
+                    let memoryAddress = this.getAttribute('data-address');
+
+                    // Simulate getting memory value (can be replaced with actual logic)
+                    let memoryValue = 'Value at ' + memoryAddress;
+
+                    // Display memory address and value
+                    memoryAddressDisplay.textContent = 'Memory Address: ' + memoryAddress;
+                    memoryValueDisplay.textContent = 'Memory Value: ' + memoryValue;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

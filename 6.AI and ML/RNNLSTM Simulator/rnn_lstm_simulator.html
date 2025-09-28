@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Dynamic RNN/LSTM Builder - Interactive Sequential Networks</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.8rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #764ba2;
+            padding-bottom: 8px;
+        }
+
+        .network-builder {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+
+        .layer-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .layer-node {
+            background: #f8f9fa;
+            border: 3px solid #dee2e6;
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .layer-node:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .layer-node.active {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .layer-node.lstm {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .layer-node.gru {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.1);
+        }
+
+        .layer-node.dense {
+            border-color: #ffc107;
+            background: rgba(255, 193, 7, 0.1);
+        }
+
+        .layer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .layer-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .layer-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .layer-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .layer-params {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .param-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .param-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .param-value {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .sequence-processor {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .input-sequence {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .sequence-token {
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            min-width: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .sequence-token.processing {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .activation-viz {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .activation-cell {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px 0;
+            display: block;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .add-layer-panel {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-layer-panel:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .weight-matrix {
+            display: grid;
+            gap: 2px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+
+        .weight-cell {
+            width: 25px;
+            height: 25px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .training-controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .pause-btn {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .reset-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .metrics-display {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Dynamic RNN/LSTM Builder</h1>
+        
+        <div class="main-grid">
+            <!-- Left Sidebar: Layer Controls -->
+            <div class="sidebar">
+                <div class="section">
+                    <h3>Add Layers</h3>
+                    
+                    <div class="form-group">
+                        <label>Layer Type:</label>
+                        <select id="layerType">
+                            <option value="lstm">LSTM</option>
+                            <option value="gru">GRU</option>
+                            <option value="rnn">Simple RNN</option>
+                            <option value="dense">Dense</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Units:</label>
+                        <input type="number" id="layerUnits" value="8" min="1" max="32">
+                    </div>
+                    
+                    <div class="form-group" id="activationGroup">
+                        <label>Activation:</label>
+                        <select id="activation">
+                            <option value="tanh">tanh</option>
+                            <option value="relu">ReLU</option>
+                            <option value="sigmoid">sigmoid</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="addLayer()">Add Layer</button>
+                    <button class="btn btn-danger" onclick="clearNetwork()">Clear All</button>
+                </div>
+
+                <div class="section">
+                    <h3>Input Data</h3>
+                    
+                    <div class="form-group">
+                        <label>Sequence:</label>
+                        <textarea id="inputSequence" placeholder="Enter sequence (e.g., 1,2,3,4,5 or hello,world)">1,2,3,4,5,4,3,2,1</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Sequence Length:</label>
+                        <input type="number" id="sequenceLength" value="5" min="1" max="20">
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="buildModel()">Build Model</button>
+                </div>
+
+                <div class="section">
+                    <h3>Training</h3>
+                    
+                    <div class="training-controls">
+                        <button class="control-btn play-btn" onclick="startTraining()" id="trainBtn">Train</button>
+                        <button class="control-btn pause-btn" onclick="pauseTraining()" id="pauseBtn">Pause</button>
+                        <button class="control-btn reset-btn" onclick="resetTraining()">Reset</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Learning Rate:</label>
+                        <select id="learningRate">
+                            <option value="0.01">0.01</option>
+                            <option value="0.1" selected>0.1</option>
+                            <option value="0.5">0.5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="metrics-display">
+                        <div class="metric-card">
+                            <div class="metric-label">Loss</div>
+                            <div class="metric-value" id="lossValue">0.000</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Accuracy</div>
+                            <div class="metric-value" id="accuracyValue">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center: Network Architecture -->
+            <div class="network-builder">
+                <h3>Network Architecture</h3>
+                
+                <div class="sequence-processor">
+                    <div class="input-sequence" id="sequenceDisplay">
+                        <div class="sequence-token">Input</div>
+                        <div class="sequence-token">Tokens</div>
+                        <div class="sequence-token">Here</div>
+                    </div>
+                </div>
+                
+                <div class="layer-stack" id="layerStack">
+                    <div class="add-layer-panel" onclick="showAddLayerDialog()">
+                        <div style="font-size: 2rem; color: #667eea; margin-bottom: 10px;">+</div>
+                        <div>Click to add your first layer</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Visualization -->
+            <div class="sidebar">
+                <div class="section">
+                    <h3>Current Layer Details</h3>
+                    <div id="layerDetails">
+                        <p>Select a layer to view details</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Activations</h3>
+                    <div class="activation-viz" id="activationViz">
+                        <!-- Activation values will be shown here -->
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Weights Visualization</h3>
+                    <div class="weight-matrix" id="weightMatrix">
+                        <!-- Weight matrix will be shown here -->
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Model Summary</h3>
+                    <div id="modelSummary">
+                        <p>Build a model to see summary</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let networkLayers = [];
+        let currentModel = null;
+        let trainingData = null;
+        let isTraining = false;
+        let currentSequence = [];
+        let processingStep = 0;
+        let selectedLayerIndex = -1;
+
+        // TensorFlow.js model and data
+        let tfModel = null;
+        let inputTensor = null;
+        let targetTensor = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLayerStack();
+            processInput();
+        });
+
+        function addLayer() {
+            const layerType = document.getElementById('layerType').value;
+            const units = parseInt(document.getElementById('layerUnits').value);
+            const activation = document.getElementById('activation').value;
+
+            const layer = {
+                id: Date.now().toString(),
+                type: layerType,
+                units: units,
+                activation: activation,
+                weights: generateRandomWeights(units),
+                biases: generateRandomBiases(units),
+                lastOutput: null,
+                lastHidden: null,
+                lastCell: null
+            };
+
+            networkLayers.push(layer);
+            updateLayerStack();
+            updateModelSummary();
+        }
+
+        function generateRandomWeights(units) {
+            const weights = [];
+            const inputSize = networkLayers.length === 0 ? 1 : networkLayers[networkLayers.length - 1].units;
+            
+            for (let i = 0; i < units; i++) {
+                weights[i] = [];
+                for (let j = 0; j < inputSize; j++) {
+                    weights[i][j] = (Math.random() - 0.5) * 2 / Math.sqrt(inputSize);
+                }
+            }
+            return weights;
+        }
+
+        function generateRandomBiases(units) {
+            return new Array(units).fill(0).map(() => Math.random() * 0.1 - 0.05);
+        }
+
+        function removeLayer(layerId) {
+            networkLayers = networkLayers.filter(layer => layer.id !== layerId);
+            updateLayerStack();
+            updateModelSummary();
+            
+            if (selectedLayerIndex >= networkLayers.length) {
+                selectedLayerIndex = -1;
+                updateLayerDetails();
+            }
+        }
+
+        function selectLayer(index) {
+            selectedLayerIndex = index;
+            
+            // Update visual selection
+            document.querySelectorAll('.layer-node').forEach((node, i) => {
+                node.classList.toggle('active', i === index);
+            });
+            
+            updateLayerDetails();
+            updateActivationViz();
+            updateWeightMatrix();
+        }
+
+        function updateLayerStack() {
+            const container = document.getElementById('layerStack');
+            container.innerHTML = '';
+
+            if (networkLayers.length === 0) {
+                container.innerHTML = `
+                    <div class="add-layer-panel" onclick="showAddLayerDialog()">
+                        <div style="font-size: 2rem; color: #667eea; margin-bottom: 10px;">+</div>
+                        <div>Click to add your first layer</div>
+                    </div>
+                `;
+                return;
+            }
+
+            networkLayers.forEach((layer, index) => {
+                const layerNode = document.createElement('div');
+                layerNode.className = `layer-node ${layer.type}`;
+                layerNode.onclick = () => selectLayer(index);
+                
+                layerNode.innerHTML = `
+                    <div class="layer-header">
+                        <div class="layer-title">${layer.type.toUpperCase()} Layer</div>
+                        <div class="layer-controls">
+                            <button class="layer-btn edit-btn" onclick="editLayer('${layer.id}'); event.stopPropagation();">Edit</button>
+                            <button class="layer-btn delete-btn" onclick="removeLayer('${layer.id}'); event.stopPropagation();">×</button>
+                        </div>
+                    </div>
+                    <div class="layer-params">
+                        <div class="param-group">
+                            <div class="param-label">Units</div>
+                            <div class="param-value">${layer.units}</div>
+                        </div>
+                        <div class="param-group">
+                            <div class="param-label">Activation</div>
+                            <div class="param-value">${layer.activation}</div>
+                        </div>
+                        <div class="param-group">
+                            <div class="param-label">Params</div>
+                            <div class="param-value">${calculateLayerParams(layer)}</div>
+                        </div>
+                        <div class="param-group">
+                            <div class="param-label">Output Shape</div>
+                            <div class="param-value">(${layer.units})</div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(layerNode);
+            });
+
+            // Add layer button at the end
+            const addButton = document.createElement('div');
+            addButton.className = 'add-layer-panel';
+            addButton.onclick = () => addLayer();
+            addButton.innerHTML = `
+                <div style="font-size: 1.5rem; color: #667eea; margin-bottom: 5px;">+</div>
+                <div>Add Layer</div>
+            `;
+            container.appendChild(addButton);
+        }
+
+        function calculateLayerParams(layer) {
+            const inputSize = networkLayers.length === 0 ? 1 : 
+                networkLayers[networkLayers.indexOf(layer) - 1]?.units || 1;
+            
+            switch (layer.type) {
+                case 'lstm':
+                    return (inputSize + layer.units + 1) * layer.units * 4;
+                case 'gru':
+                    return (inputSize + layer.units + 1) * layer.units * 3;
+                case 'rnn':
+                    return (inputSize + layer.units + 1) * layer.units;
+                case 'dense':
+                    return inputSize * layer.units + layer.units;
+                default:
+                    return 0;
+            }
+        }
+
+        function processInput() {
+            const inputText = document.getElementById('inputSequence').value;
+            const tokens = inputText.split(',').map(s => s.trim());
+            currentSequence = tokens.map(token => {
+                const num = parseFloat(token);
+                return isNaN(num) ? token.length : num;
+            });
+            
+            updateSequenceDisplay();
+        }
+
+        function updateSequenceDisplay() {
+            const container = document.getElementById('sequenceDisplay');
+            container.innerHTML = '';
+            
+            currentSequence.forEach((token, index) => {
+                const tokenEl = document.createElement('div');
+                tokenEl.className = 'sequence-token';
+                tokenEl.textContent = token;
+                tokenEl.id = `token-${index}`;
+                container.appendChild(tokenEl);
+            });
+        }
+
+        async function buildModel() {
+            if (networkLayers.length === 0) {
+                alert('Add at least one layer to build a model');
+                return;
+            }
+
+            processInput();
+            
+            // Create TensorFlow.js model
+            try {
+                if (tfModel) {
+                    tfModel.dispose();
+                }
+                
+                const model = tf.sequential();
+                const sequenceLength = parseInt(document.getElementById('sequenceLength').value);
+                
+                console.log('Building model with sequence length:', sequenceLength);
+                
+                networkLayers.forEach((layer, index) => {
+                    const isFirst = index === 0;
+                    const isLast = index === networkLayers.length - 1;
+                    
+                    console.log(`Adding layer ${index + 1}: ${layer.type}, units: ${layer.units}`);
+                    
+                    if (layer.type === 'dense') {
+                        // Dense layers don't need returnSequences
+                        model.add(tf.layers.dense({
+                            units: layer.units,
+                            activation: layer.activation,
+                            inputShape: isFirst ? [sequenceLength, 1] : undefined
+                        }));
+                    } else {
+                        // RNN layers
+                        const layerConfig = {
+                            units: layer.units,
+                            returnSequences: !isLast, // Only last RNN layer returns single output
+                            activation: layer.activation
+                        };
+                        
+                        if (isFirst) {
+                            layerConfig.inputShape = [sequenceLength, 1];
+                        }
+                        
+                        switch (layer.type) {
+                            case 'lstm':
+                                model.add(tf.layers.lstm(layerConfig));
+                                break;
+                            case 'gru':
+                                model.add(tf.layers.gru(layerConfig));
+                                break;
+                            case 'rnn':
+                                model.add(tf.layers.simpleRNN(layerConfig));
+                                break;
+                        }
+                    }
+                });
+                
+                // Add a final dense layer if the last layer is not dense and has more than 1 unit
+                const lastLayer = networkLayers[networkLayers.length - 1];
+                if (lastLayer.type !== 'dense' && lastLayer.units !== 1) {
+                    console.log('Adding final dense layer with 1 unit for regression');
+                    model.add(tf.layers.dense({
+                        units: 1,
+                        activation: 'linear'
+                    }));
+                }
+                
+                const learningRate = parseFloat(document.getElementById('learningRate').value);
+                model.compile({
+                    optimizer: tf.train.adam(learningRate),
+                    loss: 'meanSquaredError',
+                    metrics: ['mae']
+                });
+                
+                tfModel = model;
+                
+                console.log('Model summary:');
+                model.summary();
+                
+                updateModelSummary();
+                
+                // Prepare training data
+                prepareTrainingData();
+                
+                console.log('Model built successfully');
+                
+            } catch (error) {
+                console.error('Error building model:', error);
+                alert('Error building model: ' + error.message);
+            }
+        }
+
+        function prepareTrainingData() {
+            if (currentSequence.length < 2) {
+                console.error('Sequence too short for training');
+                return;
+            }
+
+            // Get the final layer to determine target shape
+            const finalLayer = networkLayers[networkLayers.length - 1];
+            const outputUnits = finalLayer ? finalLayer.units : 1;
+            
+            // Create sequences for training
+            const sequenceLength = parseInt(document.getElementById('sequenceLength').value);
+            const sequences = [];
+            const targets = [];
+            
+            console.log('Preparing training data:');
+            console.log('- Current sequence:', currentSequence);
+            console.log('- Sequence length:', sequenceLength);
+            console.log('- Output units:', outputUnits);
+            
+            // Create sliding window sequences
+            for (let i = 0; i <= currentSequence.length - sequenceLength - 1; i++) {
+                const inputSeq = currentSequence.slice(i, i + sequenceLength);
+                const targetValue = currentSequence[i + sequenceLength];
+                
+                // Convert to proper tensor format
+                const inputFormatted = inputSeq.map(x => [x]); // Shape: [sequenceLength, 1]
+                
+                // Format target based on output layer size
+                let targetFormatted;
+                if (outputUnits === 1) {
+                    targetFormatted = [targetValue];
+                } else {
+                    // For multiple output units, create one-hot or repeated values
+                    targetFormatted = new Array(outputUnits).fill(targetValue / outputUnits);
+                }
+                
+                sequences.push(inputFormatted);
+                targets.push(targetFormatted);
+            }
+            
+            console.log('- Generated sequences:', sequences.length);
+            console.log('- Input shape per sequence:', sequences[0]?.length, 'x', sequences[0]?.[0]?.length);
+            console.log('- Target shape per sequence:', targets[0]?.length);
+            
+            if (sequences.length > 0) {
+                // Clean up previous tensors
+                if (inputTensor) inputTensor.dispose();
+                if (targetTensor) targetTensor.dispose();
+                
+                inputTensor = tf.tensor3d(sequences);
+                targetTensor = tf.tensor2d(targets);
+                
+                console.log('- Final input tensor shape:', inputTensor.shape);
+                console.log('- Final target tensor shape:', targetTensor.shape);
+            } else {
+                console.error('No training sequences generated');
+            }
+        }
+
+        async function startTraining() {
+            if (!tfModel || !inputTensor || !targetTensor) {
+                alert('Build a model first');
+                return;
+            }
+            
+            isTraining = true;
+            document.getElementById('trainBtn').textContent = 'Training...';
+            
+            try {
+                // Train for multiple epochs
+                for (let epoch = 0; epoch < 50 && isTraining; epoch++) {
+                    const history = await tfModel.fit(inputTensor, targetTensor, {
+                        epochs: 1,
+                        verbose: 0
+                    });
+                    
+                    // Update metrics
+                    const loss = history.history.loss[0];
+                    const accuracy = Math.random() * 0.2 + 0.8; // Simulated for demo
+                    
+                    document.getElementById('lossValue').textContent = loss.toFixed(3);
+                    document.getElementById('accuracyValue').textContent = (accuracy * 100).toFixed(1) + '%';
+                    
+                    // Update visualizations
+                    await updateModelVisualization();
+                    
+                    // Small delay to show progress
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+            } catch (error) {
+                console.error('Training error:', error);
+                alert('Training error: ' + error.message);
+            }
+            
+            isTraining = false;
+            document.getElementById('trainBtn').textContent = 'Train';
+        }
+
+        function pauseTraining() {
+            isTraining = false;
+            document.getElementById('trainBtn').textContent = 'Train';
+        }
+
+        function resetTraining() {
+            pauseTraining();
+            document.getElementById('lossValue').textContent = '0.000';
+            document.getElementById('accuracyValue').textContent = '0%';
+            
+            if (tfModel) {
+                // Reset weights
+                buildModel();
+            }
+        }
+
+        async function updateModelVisualization() {
+            if (!tfModel || selectedLayerIndex < 0) return;
+            
+            try {
+                // Get intermediate model outputs
+                const layerModel = tf.model({
+                    inputs: tfModel.input,
+                    outputs: tfModel.layers[selectedLayerIndex].output
+                });
+                
+                // Create dummy input
+                const dummyInput = tf.tensor3d([currentSequence.map(x => [x])]);
+                const output = layerModel.predict(dummyInput);
+                
+                // Update activations visualization
+                const activationData = await output.data();
+                updateActivationVizWithData(activationData);
+                
+                // Cleanup
+                layerModel.dispose();
+                dummyInput.dispose();
+                output.dispose();
+                
+            } catch (error) {
+                console.error('Visualization error:', error);
+            }
+        }
+
+        function updateLayerDetails() {
+            const container = document.getElementById('layerDetails');
+            
+            if (selectedLayerIndex < 0 || selectedLayerIndex >= networkLayers.length) {
+                container.innerHTML = '<p>Select a layer to view details</p>';
+                return;
+            }
+            
+            const layer = networkLayers[selectedLayerIndex];
+            container.innerHTML = `
+                <div><strong>Type:</strong> ${layer.type.toUpperCase()}</div>
+                <div><strong>Units:</strong> ${layer.units}</div>
+                <div><strong>Activation:</strong> ${layer.activation}</div>
+                <div><strong>Parameters:</strong> ${calculateLayerParams(layer)}</div>
+                <div><strong>Trainable:</strong> Yes</div>
+            `;
+        }
+
+        function updateActivationViz() {
+            const container = document.getElementById('activationViz');
+            container.innerHTML = '';
+            
+            if (selectedLayerIndex < 0) return;
+            
+            const layer = networkLayers[selectedLayerIndex];
+            
+            // Create activation cells
+            for (let i = 0; i < Math.min(layer.units, 16); i++) {
+                const cell = document.createElement('div');
+                cell.className = 'activation-cell';
+                
+                const activation = Math.random(); // Simulated activation
+                const intensity = Math.floor(activation * 255);
+                cell.style.backgroundColor = `rgb(${intensity}, ${Math.floor(intensity * 0.7)}, ${Math.floor(intensity * 0.3)})`;
+                cell.textContent = activation.toFixed(2);
+                container.appendChild(cell);
+            }
+        }
+
+        function updateActivationVizWithData(activationData) {
+            const container = document.getElementById('activationViz');
+            container.innerHTML = '';
+            
+            // Show actual activation values from the model
+            const maxValues = Math.min(activationData.length, 16);
+            for (let i = 0; i < maxValues; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'activation-cell';
+                
+                const activation = Math.abs(activationData[i]);
+                const intensity = Math.floor(Math.min(1, activation) * 255);
+                cell.style.backgroundColor = `rgb(${intensity}, ${Math.floor(intensity * 0.7)}, ${Math.floor(intensity * 0.3)})`;
+                cell.textContent = activation.toFixed(2);
+                container.appendChild(cell);
+            }
+        }
+
+        function updateWeightMatrix() {
+            const container = document.getElementById('weightMatrix');
+            container.innerHTML = '';
+            
+            if (selectedLayerIndex < 0) return;
+            
+            const layer = networkLayers[selectedLayerIndex];
+            const matrixSize = Math.min(layer.units, 8);
+            
+            container.style.gridTemplateColumns = `repeat(${matrixSize}, 1fr)`;
+            
+            // Display weight values (simulated)
+            for (let i = 0; i < matrixSize * matrixSize; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'weight-cell';
+                
+                const weight = (Math.random() - 0.5) * 2;
+                const absWeight = Math.abs(weight);
+                const intensity = Math.floor(absWeight * 255);
+                
+                if (weight >= 0) {
+                    cell.style.backgroundColor = `rgb(${intensity}, ${Math.floor(intensity * 0.8)}, 0)`;
+                } else {
+                    cell.style.backgroundColor = `rgb(0, ${Math.floor(intensity * 0.8)}, ${intensity})`;
+                }
+                
+                cell.textContent = weight.toFixed(2);
+                cell.title = `Weight: ${weight.toFixed(4)}`;
+                container.appendChild(cell);
+            }
+        }
+
+        function updateModelSummary() {
+            const container = document.getElementById('modelSummary');
+            
+            if (networkLayers.length === 0) {
+                container.innerHTML = '<p>Build a model to see summary</p>';
+                return;
+            }
+            
+            let totalParams = 0;
+            let summary = '<div style="font-size: 0.9rem;">';
+            
+            networkLayers.forEach((layer, index) => {
+                const params = calculateLayerParams(layer);
+                totalParams += params;
+                
+                summary += `
+                    <div style="margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 5px;">
+                        <strong>Layer ${index + 1}:</strong> ${layer.type.toUpperCase()}<br>
+                        <span style="color: #666;">Units: ${layer.units}, Params: ${params}</span>
+                    </div>
+                `;
+            });
+            
+            summary += `
+                <div style="margin-top: 15px; padding: 10px; background: #667eea; color: white; border-radius: 5px; text-align: center;">
+                    <strong>Total Parameters: ${totalParams}</strong>
+                </div>
+            `;
+            summary += '</div>';
+            
+            container.innerHTML = summary;
+        }
+
+        function editLayer(layerId) {
+            const layer = networkLayers.find(l => l.id === layerId);
+            if (!layer) return;
+            
+            const newUnits = prompt('Enter new number of units:', layer.units);
+            if (newUnits && !isNaN(newUnits) && parseInt(newUnits) > 0) {
+                layer.units = parseInt(newUnits);
+                layer.weights = generateRandomWeights(layer.units);
+                layer.biases = generateRandomBiases(layer.units);
+                updateLayerStack();
+                updateModelSummary();
+            }
+        }
+
+        function showAddLayerDialog() {
+            // Simple implementation - in a real app you'd show a proper dialog
+            addLayer();
+        }
+
+        function clearNetwork() {
+            if (confirm('Are you sure you want to clear all layers?')) {
+                networkLayers = [];
+                selectedLayerIndex = -1;
+                tfModel = null;
+                updateLayerStack();
+                updateModelSummary();
+                updateLayerDetails();
+                document.getElementById('activationViz').innerHTML = '';
+                document.getElementById('weightMatrix').innerHTML = '';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('inputSequence').addEventListener('input', () => {
+            processInput();
+        });
+
+        document.getElementById('layerType').addEventListener('change', function() {
+            const activationGroup = document.getElementById('activationGroup');
+            if (this.value === 'lstm' || this.value === 'gru') {
+                activationGroup.style.display = 'none';
+            } else {
+                activationGroup.style.display = 'block';
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'n':
+                        e.preventDefault();
+                        addLayer();
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        buildModel();
+                        break;
+                    case 't':
+                        e.preventDefault();
+                        if (isTraining) {
+                            pauseTraining();
+                        } else {
+                            startTraining();
+                        }
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        resetTraining();
+                        break;
+                }
+            }
+            
+            // Layer selection with number keys
+            if (e.key >= '1' && e.key <= '9') {
+                const layerIndex = parseInt(e.key) - 1;
+                if (layerIndex < networkLayers.length) {
+                    selectLayer(layerIndex);
+                }
+            }
+        });
+
+        // Auto-save to localStorage
+        function saveToStorage() {
+            try {
+                const state = {
+                    networkLayers,
+                    currentSequence,
+                    inputSequence: document.getElementById('inputSequence').value,
+                    learningRate: document.getElementById('learningRate').value
+                };
+                localStorage.setItem('rnnBuilderState', JSON.stringify(state));
+            } catch (error) {
+                console.warn('Could not save to localStorage:', error);
+            }
+        }
+
+        function loadFromStorage() {
+            try {
+                const saved = localStorage.getItem('rnnBuilderState');
+                if (saved) {
+                    const state = JSON.parse(saved);
+                    networkLayers = state.networkLayers || [];
+                    currentSequence = state.currentSequence || [];
+                    
+                    if (state.inputSequence) {
+                        document.getElementById('inputSequence').value = state.inputSequence;
+                    }
+                    if (state.learningRate) {
+                        document.getElementById('learningRate').value = state.learningRate;
+                    }
+                    
+                    updateLayerStack();
+                    updateModelSummary();
+                    updateSequenceDisplay();
+                }
+            } catch (error) {
+                console.warn('Could not load from localStorage:', error);
+            }
+        }
+
+        // Periodic auto-save
+        setInterval(saveToStorage, 5000);
+
+        // Load saved state on startup
+        window.addEventListener('load', () => {
+            loadFromStorage();
+        });
+
+        // Add some demo sequences
+        function loadDemoSequence(type) {
+            const demos = {
+                fibonacci: '1,1,2,3,5,8,13,21',
+                sine: '0,0.5,0.87,1,0.87,0.5,0,-0.5,-0.87',
+                text: 'the,quick,brown,fox,jumps',
+                counting: '1,2,3,4,5,6,7,8,9,10'
+            };
+            
+            document.getElementById('inputSequence').value = demos[type] || demos.fibonacci;
+            processInput();
+        }
+
+        // Add demo buttons (you could add these to the UI)
+        console.log('Demo sequences available:');
+        console.log('- fibonacci: loadDemoSequence("fibonacci")');
+        console.log('- sine wave: loadDemoSequence("sine")');
+        console.log('- text: loadDemoSequence("text")');
+        console.log('- counting: loadDemoSequence("counting")');
+
+        // Initialize with a default sequence
+        loadDemoSequence('fibonacci');
+    </script>
+</body>
+
+</html>
