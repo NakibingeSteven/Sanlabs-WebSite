@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sanHub — The Complete Learning OS for Africa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #16161f;
+    --line: #ffffff0f;
+    --line2: #ffffff18;
+    --text: #e8e8f0;
+    --muted: #7a7a99;
+    --accent: #c8f040;
+    --accent2: #40f0c8;
+    --accent3: #f04080;
+    --fh: 'Syne', sans-serif;
+    --fb: 'Instrument Sans', sans-serif;
+    --fm: 'DM Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--fb); font-size: 16px; line-height: 1.6; overflow-x: hidden; }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.022; pointer-events: none; z-index: 9999;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.1rem 4rem;
+    background: rgba(10,10,15,0.88); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-logo { font-family: var(--fh); font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2.5rem; }
+  .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-badge { font-family: var(--fm); font-size: 0.7rem; background: var(--accent); color: #0a0a0f; padding: 0.3rem 0.8rem; border-radius: 2px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 8rem 4rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 70% 50%, #c8f04012 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, #40f0c808 0%, transparent 60%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+  }
+  .hero-content { position: relative; z-index: 2; }
+  .eyebrow {
+    font-family: var(--fm); font-size: 0.72rem; color: var(--accent);
+    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 0.8rem;
+  }
+  .eyebrow::before { content: ''; width: 2rem; height: 1px; background: var(--accent); }
+  .hero-title {
+    font-family: var(--fh);
+    font-size: clamp(2.8rem, 5vw, 5.2rem);
+    font-weight: 800; line-height: 1.0; letter-spacing: -0.03em; margin-bottom: 1.5rem;
+  }
+  .hero-title .a { color: var(--accent); }
+  .hero-title .d { color: var(--muted); }
+  .hero-sub { font-size: 1.05rem; color: var(--muted); max-width: 500px; margin-bottom: 2.5rem; line-height: 1.75; }
+  .hero-sub strong { color: var(--text); font-weight: 500; }
+  .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+
+  .btn-p {
+    background: var(--accent); color: #0a0a0f; border: none;
+    padding: 0.9rem 2rem; font-family: var(--fh); font-size: 0.9rem; font-weight: 700;
+    letter-spacing: 0.04em; cursor: pointer; text-decoration: none; display: inline-block;
+    transition: transform 0.15s, box-shadow 0.15s;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+  .btn-p:hover { transform: translateY(-2px); box-shadow: 0 8px 30px #c8f04040; }
+  .btn-g {
+    border: 1px solid var(--line2); color: var(--muted); padding: 0.9rem 2rem;
+    font-family: var(--fh); font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    text-decoration: none; display: inline-block; transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-g:hover { border-color: var(--text); color: var(--text); }
+
+  /* ORBITAL DIAGRAM */
+  .hero-visual { position: relative; z-index: 2; display: flex; justify-content: center; }
+  .hub-diagram { width: 460px; height: 460px; position: relative; }
+  .hub-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 108px; height: 108px;
+    background: var(--bg3); border: 2px solid var(--accent); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    z-index: 10; box-shadow: 0 0 40px #c8f04028, inset 0 0 20px #c8f04008;
+  }
+  .hub-center-label { font-family: var(--fh); font-weight: 800; font-size: 1rem; color: var(--accent); }
+  .hub-center-sub { font-family: var(--fm); font-size: 0.52rem; color: var(--muted); letter-spacing: 0.1em; margin-top: 2px; }
+  .hub-orbit {
+    position: absolute; top: 50%; left: 50%;
+    border-radius: 50%; border: 1px solid var(--line); transform: translate(-50%, -50%);
+  }
+  .o1 { width: 210px; height: 210px; animation: spin 25s linear infinite; }
+  .o2 { width: 340px; height: 340px; animation: spin 40s linear infinite reverse; }
+  .o3 { width: 440px; height: 440px; border-style: dashed; animation: spin 65s linear infinite; }
+  @keyframes spin { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+  .anode {
+    position: absolute; width: 50px; height: 50px;
+    background: var(--bg2); border: 1px solid var(--line); border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .o1 .anode { animation: cs1 25s linear infinite; }
+  .o2 .anode { animation: cs2 40s linear infinite reverse; }
+  .o3 .anode { animation: cs3 65s linear infinite; }
+  @keyframes cs1{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+  @keyframes cs2{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes cs3{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+  .anode:hover { border-color: var(--accent); box-shadow: 0 0 18px #c8f04030; animation-play-state: paused; }
+  .p1{top:-25px;left:calc(50% - 25px)} .p2{top:calc(50% - 25px);right:-25px} .p3{bottom:-25px;left:calc(50% - 25px)} .p4{top:calc(50% - 25px);left:-25px}
+  .p5{top:-25px;left:calc(50% - 25px)} .p6{top:calc(20% - 25px);right:calc(20% - 25px)} .p7{top:calc(50% - 25px);right:-25px} .p8{bottom:calc(20% - 25px);right:calc(20% - 25px)} .p9{bottom:-25px;left:calc(50% - 25px)} .p10{bottom:calc(20% - 25px);left:calc(20% - 25px)} .p11{top:calc(50% - 25px);left:-25px} .p12{top:calc(20% - 25px);left:calc(20% - 25px)}
+  .p13{top:-25px;left:calc(50% - 25px)}
+
+  /* STATS */
+  .stats-bar {
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: repeat(4,1fr); background: var(--bg2);
+  }
+  .stat { padding: 2.2rem 3rem; border-right: 1px solid var(--line); position: relative; overflow: hidden; }
+  .stat:last-child { border-right: none; }
+  .stat::before { content:''; position:absolute; bottom:0;left:0;right:0;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .4s; }
+  .stat:hover::before { transform:scaleX(1); }
+  .stat-n { font-family:var(--fh); font-size:2.8rem; font-weight:800; letter-spacing:-0.04em; color:var(--accent); line-height:1; margin-bottom:0.3rem; }
+  .stat-l { font-family:var(--fm); font-size:0.7rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
+
+  /* SECTIONS */
+  section { padding: 5.5rem 4rem; }
+  .sec-eye { font-family:var(--fm); font-size:0.7rem; color:var(--accent); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:0.9rem; display:flex; align-items:center; gap:.8rem; }
+  .sec-eye::before { content:''; width:1.5rem; height:1px; background:var(--accent); }
+  .sec-title { font-family:var(--fh); font-size:clamp(2rem,3.2vw,2.9rem); font-weight:800; letter-spacing:-0.03em; margin-bottom:0.9rem; line-height:1.1; }
+  .sec-sub { color:var(--muted); max-width:580px; font-size:0.97rem; line-height:1.75; margin-bottom:2.5rem; }
+
+  /* DOWNLOAD SECTION */
+  #download { background: var(--bg2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .dl-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 3rem; }
+  .dl-card {
+    background: var(--bg3); padding: 2.5rem 2rem; position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: background 0.2s;
+  }
+  .dl-card:hover { background: var(--bg); }
+  .dl-card::before { content:''; position:absolute; top:0;left:0;right:0;height:3px; transition:opacity 0.3s; }
+  .dl-nodeps::before { background: #40f0c8; }
+  .dl-lite::before   { background: var(--accent); }
+  .dl-full::before   { background: #f04080; }
+  .dl-tag {
+    font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.3rem 0.7rem; border-radius: 2px; margin-bottom: 1.2rem;
+    display: inline-block; width: fit-content;
+  }
+  .dl-nodeps .dl-tag { background: #40f0c820; color: #40f0c8; border: 1px solid #40f0c840; }
+  .dl-lite   .dl-tag { background: #c8f04020; color: var(--accent); border: 1px solid #c8f04040; }
+  .dl-full   .dl-tag { background: #f0408020; color: #f04080; border: 1px solid #f0408040; }
+  .dl-size {
+    font-family: var(--fh); font-size: 3.2rem; font-weight: 800; letter-spacing: -0.05em;
+    line-height: 1; margin-bottom: 0.3rem;
+  }
+  .dl-nodeps .dl-size { color: #40f0c8; }
+  .dl-lite   .dl-size { color: var(--accent); }
+  .dl-full   .dl-size { color: #f04080; }
+  .dl-name { font-family: var(--fh); font-size: 1.3rem; font-weight: 700; margin-bottom: 0.8rem; letter-spacing: -0.02em; }
+  .dl-desc { font-size: 0.87rem; color: var(--muted); line-height: 1.65; margin-bottom: 1.5rem; flex: 1; }
+  .dl-includes { margin-bottom: 1.8rem; }
+  .dl-includes-title { font-family: var(--fm); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .dl-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem;
+  }
+  .dl-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dl-nodeps .dot { background: #40f0c8; }
+  .dl-lite   .dot { background: var(--accent); }
+  .dl-full   .dot { background: #f04080; }
+  .dl-item .check { color: #40f0c8; font-size: 0.75rem; }
+  .dl-item .cross { color: var(--muted); font-size: 0.75rem; opacity: 0.4; }
+
+  .btn-dl {
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    padding: 0.85rem 1.5rem; font-family: var(--fh); font-size: 0.88rem; font-weight: 700;
+    letter-spacing: 0.03em; text-decoration: none; cursor: pointer; border: none;
+    transition: transform 0.15s, box-shadow 0.15s; text-align: center;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+  .btn-dl:hover { transform: translateY(-2px); }
+  .dl-nodeps .btn-dl { background: #40f0c8; color: #0a0a0f; }
+  .dl-nodeps .btn-dl:hover { box-shadow: 0 8px 28px #40f0c840; }
+  .dl-lite   .btn-dl { background: var(--accent); color: #0a0a0f; }
+  .dl-lite   .btn-dl:hover { box-shadow: 0 8px 28px #c8f04040; }
+  .dl-full   .btn-dl { background: #f04080; color: #fff; }
+  .dl-full   .btn-dl:hover { box-shadow: 0 8px 28px #f0408040; }
+
+  .dl-meta { margin-top: 0.8rem; font-family: var(--fm); font-size: 0.62rem; color: var(--muted); letter-spacing: 0.05em; text-align: center; line-height: 1.6; }
+
+  .dl-doc-strip {
+    margin-top: 2.5rem;
+    border: 1px solid var(--line);
+    background: var(--bg3);
+    padding: 1.8rem 2rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .dl-doc-left h4 { font-family: var(--fh); font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .dl-doc-left p { font-size: 0.83rem; color: var(--muted); line-height: 1.5; }
+  .btn-doc {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.75rem 1.5rem; border: 1px solid var(--line2); color: var(--text);
+    font-family: var(--fh); font-size: 0.85rem; font-weight: 600;
+    text-decoration: none; flex-shrink: 0;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-doc:hover { border-color: var(--accent); background: #c8f04008; }
+
+  /* APPS */
+  #apps { background: var(--bg); }
+  .cat-pills { display:flex; gap:.5rem; flex-wrap:wrap; margin:1.8rem 0; }
+  .cat-pill {
+    font-family:var(--fm); font-size:.7rem; padding:.35rem 1rem; border:1px solid var(--line);
+    border-radius:2px; color:var(--muted); cursor:pointer; transition:all .2s;
+    letter-spacing:.06em; text-transform:uppercase; background:transparent;
+  }
+  .cat-pill:hover,.cat-pill.active { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+  .apps-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(270px,1fr));
+    gap:1px; background:var(--line); border:1px solid var(--line); margin-top:2.5rem;
+  }
+  .app-card {
+    background:var(--bg2); padding:1.8rem; position:relative; overflow:hidden;
+    transition:background .2s; cursor:default;
+  }
+  .app-card::before {
+    content:''; position:absolute; top:0;left:0;right:0; height:3px;
+    background:var(--cc,var(--accent)); transform:scaleX(0); transform-origin:left; transition:transform .3s;
+  }
+  .app-card:hover { background:var(--bg3); }
+  .app-card:hover::before { transform:scaleX(1); }
+  .app-card.hidden { display:none; }
+  .act { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:.9rem; }
+  .aico { width:48px;height:48px; background:var(--bg); border:1px solid var(--line); border-radius:9px; display:flex;align-items:center;justify-content:center; font-size:1.4rem; }
+  .acat { font-family:var(--fm); font-size:.62rem; color:var(--muted); background:var(--bg); border:1px solid var(--line); padding:.22rem .55rem; border-radius:2px; letter-spacing:.07em; text-transform:uppercase; }
+  .aname { font-family:var(--fh); font-size:1.05rem; font-weight:700; margin-bottom:.4rem; letter-spacing:-.01em; }
+  .adesc { font-size:.85rem; color:var(--muted); line-height:1.6; margin-bottom:1rem; }
+  .atags { display:flex;flex-wrap:wrap;gap:.35rem; }
+  .tag { font-family:var(--fm); font-size:.6rem; color:var(--muted); border:1px solid var(--line); padding:.18rem .45rem; border-radius:2px; letter-spacing:.05em; }
+  .atype { position:absolute; bottom:1.4rem;right:1.4rem; font-family:var(--fm); font-size:.58rem; color:var(--bg); background:var(--cc,var(--accent)); padding:.2rem .45rem; border-radius:2px; letter-spacing:.07em; opacity:.8; }
+
+  /* MISSION */
+  #mission { background:var(--bg2); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .mission-grid { display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:start; }
+  .mission-text p { color:var(--muted); line-height:1.8; margin-bottom:1.1rem; font-size:.98rem; }
+  .mission-text p strong { color:var(--text); font-weight:500; }
+  .bq { border-left:3px solid var(--accent); padding:1.1rem 1.5rem; margin:1.8rem 0; background:var(--bg3); }
+  .bq p { font-family:var(--fh); font-size:1.05rem; font-weight:600; color:var(--text); line-height:1.5; }
+  .pillars { display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); }
+  .pillar { background:var(--bg3); padding:1.4rem 1.8rem; display:flex; gap:1.4rem; align-items:flex-start; transition:background .2s; }
+  .pillar:hover { background:var(--bg); }
+  .pnum { font-family:var(--fm); font-size:.63rem; color:var(--accent); min-width:2rem; padding-top:.12rem; letter-spacing:.1em; }
+  .pcon h4 { font-family:var(--fh); font-size:.92rem; font-weight:700; margin-bottom:.25rem; letter-spacing:-.01em; }
+  .pcon p { font-size:.83rem; color:var(--muted); line-height:1.6; }
+
+  /* HOW */
+  #how { background:var(--bg); }
+  .steps { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:2.5rem; }
+  .step { background:var(--bg2); padding:2rem; transition:background .2s; }
+  .step:hover { background:var(--bg3); }
+  .step-n { font-family:var(--fh); font-size:3.2rem; font-weight:800; color:var(--line2); line-height:1; margin-bottom:1.4rem; letter-spacing:-.05em; transition:color .2s; }
+  .step:hover .step-n { color:var(--accent); }
+  .step h4 { font-family:var(--fh); font-size:.95rem; font-weight:700; margin-bottom:.5rem; letter-spacing:-.01em; }
+  .step p { font-size:.83rem; color:var(--muted); line-height:1.6; }
+
+  /* PRIZE */
+  #prize { background:var(--bg2); border-top:1px solid var(--line); }
+  .prize-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:2.5rem; }
+  .pc { background:var(--bg3); padding:2.2rem 1.8rem; transition:background .2s; position:relative; overflow:hidden; }
+  .pc:hover { background:var(--bg); }
+  .pc::after { content:''; position:absolute; bottom:0;left:0;right:0; height:1px; background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:0; transition:opacity .3s; }
+  .pc:hover::after { opacity:1; }
+  .pico { font-size:1.9rem; margin-bottom:1rem; }
+  .pc h3 { font-family:var(--fh); font-size:1.05rem; font-weight:700; margin-bottom:.7rem; letter-spacing:-.02em; }
+  .pc p { font-size:.85rem; color:var(--muted); line-height:1.7; }
+
+  /* FOOTER */
+  footer { background:var(--bg2); border-top:1px solid var(--line); padding:2.8rem 4rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.5rem; }
+  .fl .logo { font-family:var(--fh); font-weight:800; font-size:1.15rem; letter-spacing:-.02em; margin-bottom:.35rem; }
+  .fl .logo span { color:var(--accent); }
+  .fl p { font-size:.78rem; color:var(--muted); font-family:var(--fm); letter-spacing:.04em; }
+  .fr { font-family:var(--fm); font-size:.7rem; color:var(--muted); text-align:right; line-height:1.8; }
+  .fr strong { color:var(--accent); }
+
+  /* ANIMS */
+  .fu { opacity:0; transform:translateY(28px); transition:opacity .6s ease, transform .6s ease; }
+  .fu.vis { opacity:1; transform:translateY(0); }
+  ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--line)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">san<span>Hub</span></div>
+  <div class="nav-links">
+    <a href="#download">Download</a>
+    <a href="#apps">Apps</a>
+    <a href="#mission">Mission</a>
+    <a href="#prize">Prize Case</a>
+  </div>
+  <div class="nav-badge">Eigen Prize 2025</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content fu">
+    <div class="eyebrow">Eigen Prize Submission · SANLABS 2025</div>
+    <h1 class="hero-title">
+      The Complete<br>
+      <span class="a">Learning OS</span><br>
+      <span class="d">for Africa</span>
+    </h1>
+    <p class="hero-sub">
+      <strong>13 integrated apps.</strong> One offline-first executable. Covering AI, machine learning, data science, web development, science simulations, and programming — with zero internet required.
+    </p>
+    <div class="hero-cta">
+      <a href="#download" class="btn-p">Download sanHub</a>
+      <a href="#prize" class="btn-g">Why sanHub Wins</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="hub-diagram">
+      <div class="hub-orbit o1">
+        <div class="anode p1" title="TensorFlow.js Studio">🧠</div>
+        <div class="anode p2" title="PANDAS Studio">🐼</div>
+        <div class="anode p3" title="Sklearn Blockly">📊</div>
+        <div class="anode p4" title="Pyeon Studio">🐍</div>
+      </div>
+      <div class="hub-orbit o2">
+        <div class="anode p5"  title="AI Studio">🤖</div>
+        <div class="anode p6"  title="Bloka">🧩</div>
+        <div class="anode p7"  title="JavaScript Studio">⚡</div>
+        <div class="anode p8"  title="CSS Studio">🎨</div>
+        <div class="anode p9"  title="HTML Studio">🌐</div>
+        <div class="anode p10" title="Grammar Studio">📝</div>
+        <div class="anode p11" title="SANSIMS Chemistry">⚗️</div>
+        <div class="anode p12" title="SANSIMS Physics">🔭</div>
+      </div>
+      <div class="hub-orbit o3">
+        <div class="anode p13" title="Sanporter Studio">🚀</div>
+      </div>
+      <div class="hub-center">
+        <div class="hub-center-label">sanHub</div>
+        <div class="hub-center-sub">LOCALHOST:5000</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat fu"><div class="stat-n" id="s0">13</div><div class="stat-l">Integrated Apps</div></div>
+  <div class="stat fu"><div class="stat-n" id="s1">5</div><div class="stat-l">Learning Domains</div></div>
+  <div class="stat fu"><div class="stat-n" id="s2">0</div><div class="stat-l">Internet Required</div></div>
+  <div class="stat fu"><div class="stat-n" id="s3">1</div><div class="stat-l">Executable to Install</div></div>
+</div>
+
+<!-- DOWNLOAD -->
+<section id="download">
+  <div class="sec-eye">Get sanHub</div>
+  <h2 class="sec-title">Three builds.<br>One for every context.</h2>
+  <p class="sec-sub">All three editions bundle every app. The build mode controls only which Python dependencies come pre-installed — choose based on your bandwidth and use case.</p>
+
+  <div class="dl-grid">
+    <!-- NODEPS -->
+    <div class="dl-card dl-nodeps fu">
+      <div class="dl-tag">nodeps edition</div>
+      <div class="dl-size">~50MB</div>
+      <div class="dl-name">Portable Build</div>
+      <div class="dl-desc">All 13 apps bundled. No app-level Python dependencies pre-installed. Static apps (web dev, science sims, visual coding) work immediately. Flask apps prompt users to install deps on first launch.</div>
+      <div class="dl-includes">
+        <div class="dl-includes-title">What works immediately</div>
+        <div class="dl-item"><span class="dot"></span>All 8 static apps — instant launch</div>
+        <div class="dl-item"><span class="dot"></span>Hub dashboard &amp; app manager</div>
+        <div class="dl-item"><span class="dot"></span>Flask app shells (deps install on demand)</div>
+        <div class="dl-item" style="opacity:0.4"><span class="dot" style="background:var(--muted)"></span>Pre-installed ML deps — manual install needed</div>
+      </div>
+      <a href="sanHub_nodeps.zip" download class="btn-dl">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download nodeps (~50MB)
+      </a>
+      <div class="dl-meta">Windows · macOS · Linux<br>Best for: USB sticks, low-bandwidth distribution</div>
+    </div>
+
+    <!-- LITE -->
+    <div class="dl-card dl-lite fu">
+      <div class="dl-tag">⭐ recommended</div>
+      <div class="dl-size">~200MB</div>
+      <div class="dl-name">Lite Build</div>
+      <div class="dl-desc">All 13 apps bundled. Most Python dependencies pre-installed and ready. Only pyeon_studio (TinyML training with TensorFlow/Keras) needs a one-time manual install — everything else works immediately.</div>
+      <div class="dl-includes">
+        <div class="dl-includes-title">What works immediately</div>
+        <div class="dl-item"><span class="dot"></span>All 8 static apps</div>
+        <div class="dl-item"><span class="dot"></span>TensorFlow.js Studio (5101)</div>
+        <div class="dl-item"><span class="dot"></span>PANDAS Studio (5102)</div>
+        <div class="dl-item"><span class="dot"></span>Sklearn Blockly (5103)</div>
+        <div class="dl-item"><span class="dot"></span>Sanporter Studio (5105)</div>
+        <div class="dl-item" style="opacity:0.45"><span class="dot" style="background:var(--muted)"></span>Pyeon Studio — one manual install step</div>
+      </div>
+      <a href="sanHub_lite.zip" download class="btn-dl">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download lite (~200MB)
+      </a>
+      <div class="dl-meta">Windows · macOS · Linux<br>Best for: classroom deployment, general schools</div>
+    </div>
+
+    <!-- FULL -->
+    <div class="dl-card dl-full fu">
+      <div class="dl-tag">full edition</div>
+      <div class="dl-size">~2GB</div>
+      <div class="dl-name">Full Build</div>
+      <div class="dl-desc">Every dependency for every app pre-installed. All 13 apps — including the complete TinyML pipeline via Pyeon Studio — work out of the box with zero additional steps required.</div>
+      <div class="dl-includes">
+        <div class="dl-includes-title">What works immediately</div>
+        <div class="dl-item"><span class="dot"></span>All 13 apps — every single one</div>
+        <div class="dl-item"><span class="dot"></span>Full TinyML pipeline (Pyeon Studio)</div>
+        <div class="dl-item"><span class="dot"></span>TensorFlow + Keras pre-installed</div>
+        <div class="dl-item"><span class="dot"></span>Complete data science stack</div>
+        <div class="dl-item"><span class="dot"></span>Zero additional setup required</div>
+      </div>
+      <a href="sanHub_full.zip" download class="btn-dl">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download full (~2GB)
+      </a>
+      <div class="dl-meta">Windows · macOS · Linux<br>Best for: makerspaces, university labs, TinyML curriculum</div>
+    </div>
+  </div>
+
+  <!-- Doc download strip -->
+  <div class="dl-doc-strip fu">
+    <div class="dl-doc-left">
+      <h4>📄 Eigen Prize Submission Document</h4>
+      <p>Full write-up: problem statement, architecture, app catalogue, build modes, impact case, and prize criteria — in the same format as the competition brief.</p>
+    </div>
+    <a href="sanHub_Eigen_Prize.docx" download class="btn-doc">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download .docx submission
+    </a>
+  </div>
+</section>
+
+<!-- APPS -->
+<section id="apps">
+  <div class="sec-eye">The Platform</div>
+  <h2 class="sec-title">13 Apps. One Hub.</h2>
+  <p class="sec-sub">Every app covers a different facet of STEM and digital literacy. From block-based visual coding to full TinyML pipelines — all offline, all in one click.</p>
+  <div class="cat-pills" id="catf">
+    <button class="cat-pill active" data-cat="all">All</button>
+    <button class="cat-pill" data-cat="AI &amp; ML">AI &amp; ML</button>
+    <button class="cat-pill" data-cat="Data Science">Data Science</button>
+    <button class="cat-pill" data-cat="Web Dev">Web Dev</button>
+    <button class="cat-pill" data-cat="Programming">Programming</button>
+    <button class="cat-pill" data-cat="Science Sims">Science Sims</button>
+    <button class="cat-pill" data-cat="Language">Language</button>
+  </div>
+  <div class="apps-grid" id="agrid">
+    <div class="app-card fu" data-cat="AI &amp; ML" style="--cc:#6366f1"><div class="act"><div class="aico">🤖</div><div class="acat">AI &amp; ML</div></div><div class="aname">AI Studio</div><div class="adesc">Build and experiment with AI models in a fully visual interface. No code required to prototype intelligent systems.</div><div class="atags"><span class="tag">ai</span><span class="tag">visual</span><span class="tag">interactive</span></div><div class="atype">static</div></div>
+    <div class="app-card fu" data-cat="AI &amp; ML" style="--cc:#f97316"><div class="act"><div class="aico">🧠</div><div class="acat">AI &amp; ML</div></div><div class="aname">TensorFlow.js Studio</div><div class="adesc">Design and train neural networks through a drag-and-drop block interface powered by TensorFlow.js.</div><div class="atags"><span class="tag">ml</span><span class="tag">tensorflow</span><span class="tag">blockly</span><span class="tag">neural-networks</span></div><div class="atype">flask · 5101</div></div>
+    <div class="app-card fu" data-cat="AI &amp; ML" style="--cc:#14b8a6"><div class="act"><div class="aico">📊</div><div class="acat">AI &amp; ML</div></div><div class="aname">Sklearn Blockly</div><div class="adesc">Visual machine learning with scikit-learn. Build classification and regression pipelines with Blockly blocks.</div><div class="atags"><span class="tag">sklearn</span><span class="tag">ml</span><span class="tag">blockly</span><span class="tag">classification</span></div><div class="atype">flask · 5103</div></div>
+    <div class="app-card fu" data-cat="Data Science" style="--cc:#8b5cf6"><div class="act"><div class="aico">🐼</div><div class="acat">Data Science</div></div><div class="aname">PANDAS Studio</div><div class="adesc">Block-based data analysis with Pandas and Python. Explore and visualise datasets without writing code.</div><div class="atags"><span class="tag">pandas</span><span class="tag">data</span><span class="tag">python</span><span class="tag">blockly</span></div><div class="atype">flask · 5102</div></div>
+    <div class="app-card fu" data-cat="Data Science" style="--cc:#ec4899"><div class="act"><div class="aico">🚀</div><div class="acat">Data Science</div></div><div class="aname">Sanporter Studio</div><div class="adesc">Deploy trained ML models directly to microcontrollers. The bridge between data science and embedded hardware.</div><div class="atags"><span class="tag">tinyml</span><span class="tag">microcontroller</span><span class="tag">deployment</span><span class="tag">sklearn</span></div><div class="atype">flask · 5105</div></div>
+    <div class="app-card fu" data-cat="Programming" style="--cc:#3b82f6"><div class="act"><div class="aico">🐍</div><div class="acat">Programming</div></div><div class="aname">Pyeon Studio</div><div class="adesc">End-to-end TinyML pipeline: collect data → train model → export to embedded C++. Full firmware pipeline.</div><div class="atags"><span class="tag">tinyml</span><span class="tag">python</span><span class="tag">embedded</span><span class="tag">c++</span></div><div class="atype">flask · 5104</div></div>
+    <div class="app-card fu" data-cat="Programming" style="--cc:#f59e0b"><div class="act"><div class="aico">🧩</div><div class="acat">Programming</div></div><div class="aname">Bloka</div><div class="adesc">Block-based visual programming environment. Learn algorithmic thinking through drag-and-drop before text code.</div><div class="atags"><span class="tag">blockly</span><span class="tag">visual</span><span class="tag">programming</span></div><div class="atype">static</div></div>
+    <div class="app-card fu" data-cat="Web Dev" style="--cc:#ef4444"><div class="act"><div class="aico">🌐</div><div class="acat">Web Dev</div></div><div class="aname">HTML Studio</div><div class="adesc">Learn HTML with hands-on interactive exercises. Build real pages and see results instantly.</div><div class="atags"><span class="tag">html</span><span class="tag">web</span><span class="tag">beginner</span></div><div class="atype">static</div></div>
+    <div class="app-card fu" data-cat="Web Dev" style="--cc:#06b6d4"><div class="act"><div class="aico">🎨</div><div class="acat">Web Dev</div></div><div class="aname">CSS Studio</div><div class="adesc">Learn and practise CSS with interactive lessons. Style pages live — from layout to animation.</div><div class="atags"><span class="tag">css</span><span class="tag">web</span><span class="tag">lessons</span></div><div class="atype">static</div></div>
+    <div class="app-card fu" data-cat="Web Dev" style="--cc:#eab308"><div class="act"><div class="aico">⚡</div><div class="acat">Web Dev</div></div><div class="aname">JavaScript Studio</div><div class="adesc">Master JavaScript through guided interactive lessons. Build dynamic logic and interactivity for the web.</div><div class="atags"><span class="tag">javascript</span><span class="tag">web</span><span class="tag">lessons</span></div><div class="atype">static</div></div>
+    <div class="app-card fu" data-cat="Science Sims" style="--cc:#22c55e"><div class="act"><div class="aico">⚗️</div><div class="acat">Science Sims</div></div><div class="aname">SANSIMS Chemistry</div><div class="adesc">Interactive chemistry simulations covering atomic structure, bonding, equation balancing, and the periodic table.</div><div class="atags"><span class="tag">chemistry</span><span class="tag">simulation</span><span class="tag">science</span></div><div class="atype">static</div></div>
+    <div class="app-card fu" data-cat="Science Sims" style="--cc:#0ea5e9"><div class="act"><div class="aico">🔭</div><div class="acat">Science Sims</div></div><div class="aname">SANSIMS Physics</div><div class="adesc">Physics simulations spanning mechanics, waves, thermodynamics — hard concepts made tangible and interactive.</div><div class="atags"><span class="tag">physics</span><span class="tag">simulation</span><span class="tag">science</span></div><div class="atype">static</div></div>
+    <div class="app-card fu" data-cat="Language" style="--cc:#10b981"><div class="act"><div class="aico">📝</div><div class="acat">Language</div></div><div class="aname">Grammar Studio</div><div class="adesc">Interactive grammar learning platform. Strong language foundations alongside STEM — communication is itself a technology.</div><div class="atags"><span class="tag">grammar</span><span class="tag">language</span><span class="tag">interactive</span></div><div class="atype">static</div></div>
+  </div>
+</section>
+
+<!-- MISSION -->
+<section id="mission">
+  <div class="mission-grid">
+    <div class="mission-text fu">
+      <div class="sec-eye">The Problem We Solve</div>
+      <h2 class="sec-title">Education that works without infrastructure</h2>
+      <div class="bq"><p>"The biggest barrier to STEM education in Africa isn't talent or motivation — it's friction. The friction of no internet, no IT support, and fragmented tools."</p></div>
+      <p>Africa has the world's fastest-growing youth population and an extraordinary density of self-taught makers, technicians, and students. <strong>The talent is there. The tools are not.</strong></p>
+      <p>Standard educational software assumes fast internet, a capable laptop, and a full IT department. Schools outside major capitals have none of these. Teachers piece together disparate free tools, every one of which requires separate installation, internet access, and maintenance.</p>
+      <p>sanHub's answer is radical simplicity: <strong>one download, one double-click, 13 fully functional learning apps running completely offline.</strong> No configuration. No internet. No IT support required.</p>
+      <p>Whether a student is in Kampala, Kano, or the Rift Valley — if they have a laptop, they have a complete STEM education platform in their hands.</p>
+    </div>
+    <div class="fu">
+      <div class="sec-eye">Why It Matters</div>
+      <h3 style="font-family:var(--fh);font-size:1.3rem;font-weight:700;margin-bottom:1.4rem;letter-spacing:-.02em;">Five pillars of impact</h3>
+      <div class="pillars">
+        <div class="pillar"><div class="pnum">01</div><div class="pcon"><h4>Offline-first by design</h4><p>Every app runs entirely on the local machine. No API calls, no CDN, no cloud. A school with no internet gets the full experience.</p></div></div>
+        <div class="pillar"><div class="pnum">02</div><div class="pcon"><h4>No-code paths to advanced STEM</h4><p>Blockly interfaces for ML, data science, and programming — a student can train a neural network before writing a single line of code.</p></div></div>
+        <div class="pillar"><div class="pnum">03</div><div class="pcon"><h4>Simulation to hardware deployment</h4><p>The full pipeline — visual ML training to firmware export via Sanporter Studio — runs in one hub. Theory and practice, unified.</p></div></div>
+        <div class="pillar"><div class="pnum">04</div><div class="pcon"><h4>Teacher-ready out of the box</h4><p>No IT setup. Launch and teach. Every studio is a standalone lesson environment with no cross-app dependencies to manage.</p></div></div>
+        <div class="pillar"><div class="pnum">05</div><div class="pcon"><h4>Infinitely extensible</h4><p>New apps drop into <code style="font-family:var(--fm);font-size:.78rem;color:var(--accent)">apps/</code> with one manifest.json. The hub discovers and launches them automatically.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how">
+  <div class="sec-eye">The Architecture</div>
+  <h2 class="sec-title">Dead simple to run.<br>Powerful under the hood.</h2>
+  <p class="sec-sub">A Flask lifecycle manager that spawns and monitors app processes on demand. Static apps serve instantly; Flask apps get their own port.</p>
+  <div class="steps">
+    <div class="step fu"><div class="step-n">01</div><h4>Download</h4><p>One <code style="font-family:var(--fm);font-size:.78rem;color:var(--accent)">.exe</code> (or zip on Mac/Linux). A bundled Python runtime is included — nothing else to install.</p></div>
+    <div class="step fu"><div class="step-n">02</div><h4>Launch</h4><p>Double-click. The hub starts on <code style="font-family:var(--fm);font-size:.78rem;color:var(--accent)">localhost:5000</code> and opens your browser to the dashboard automatically.</p></div>
+    <div class="step fu"><div class="step-n">03</div><h4>Open an App</h4><p>Click any app card. Static apps open instantly. Flask apps spawn as separate processes on their own port and open in a new tab.</p></div>
+    <div class="step fu"><div class="step-n">04</div><h4>Learn</h4><p>The hub monitors crashes, handles idle-timeouts, and lets you restart any app with one click. It stays out of your way.</p></div>
+  </div>
+</section>
+
+<!-- PRIZE CASE -->
+<section id="prize">
+  <div class="sec-eye">Eigen Prize Submission</div>
+  <h2 class="sec-title">Why sanHub<br>belongs on the podium</h2>
+  <p class="sec-sub">The Eigen Prize rewards solutions that are technically excellent, genuinely impactful, and built with real people in mind. sanHub delivers on all three — and it's already working.</p>
+  <div class="prize-grid">
+    <div class="pc fu"><div class="pico">🎯</div><h3>Solves a Real, Immediate Problem</h3><p>African schools lack reliable internet and consistent software environments. sanHub removes both barriers with a single offline-first executable. A complete solution, not a workaround.</p></div>
+    <div class="pc fu"><div class="pico">⚙️</div><h3>Technically Excellent</h3><p>Production-grade Flask lifecycle manager with dynamic process spawning, crash recovery, idle-timeout, and auto-discovery. 13 fully functional apps across 5 domains.</p></div>
+    <div class="pc fu"><div class="pico">📐</div><h3>Genuinely Innovative</h3><p>Packaging a full STEM learning OS — including TinyML pipelines and hardware deployment — as a single offline executable for education is a novel intersection no existing tool occupies.</p></div>
+    <div class="pc fu"><div class="pico">📈</div><h3>Measurably Scalable</h3><p>New apps need only a folder and a manifest.json. The platform grows at the speed of contributors. One deployment serves an entire school indefinitely at zero recurring cost.</p></div>
+    <div class="pc fu"><div class="pico">🌍</div><h3>Built for Africa's Reality</h3><p>Designed around the real constraints: intermittent internet, limited IT support, budget hardware. Not adapted after the fact — built offline-first from day one.</p></div>
+    <div class="pc fu"><div class="pico">🔗</div><h3>End-to-End, Not Piecemeal</h3><p>From first drag-and-drop block in Bloka to a trained model deployed to a microcontroller via Sanporter Studio — the full STEM-to-hardware pipeline in one tool. A student graduates through the whole stack without leaving the hub.</p></div>
+  </div>
+</section>
+
+<footer>
+  <div class="fl">
+    <div class="logo">san<span>Hub</span></div>
+    <p>SANLABS · Eigen Prize Submission · 2025</p>
+  </div>
+  <div class="fr">
+    <strong>13 apps · 5 domains · 0 internet required</strong><br>
+    Built for Africa. Ready for the world.<br>
+    <span style="font-size:.62rem">github.com/sanlabs/sanhub</span>
+  </div>
+</footer>
+
+<script>
+  // Cat filter
+  document.querySelectorAll('.cat-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const cat = pill.dataset.cat;
+      document.querySelectorAll('.app-card').forEach(card => {
+        card.classList.toggle('hidden', cat !== 'all' && card.dataset.cat !== cat);
+      });
+    });
+  });
+
+  // Fade in observer
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        const idx = Array.from(e.target.parentElement.children).indexOf(e.target) % 8;
+        setTimeout(() => e.target.classList.add('vis'), idx * 70);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.fu').forEach(el => obs.observe(el));
+
+  // Stat counter
+  let counted = false;
+  const statsObs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !counted) {
+      counted = true;
+      [[0,13],[1,5],[2,0],[3,1]].forEach(([i, target]) => {
+        const el = document.getElementById('s'+i);
+        if (!el || target === 0) return;
+        let cur = 0; const inc = target/30;
+        const t = setInterval(() => { cur = Math.min(cur+inc,target); el.textContent=Math.round(cur); if(cur>=target)clearInterval(t); }, 35);
+      });
+    }
+  }, {threshold: 0.5});
+  const sb = document.querySelector('.stats-bar');
+  if (sb) statsObs.observe(sb);
+</script>
+</body>
+</html>
