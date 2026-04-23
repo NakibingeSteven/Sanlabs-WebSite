@@ -293,17 +293,6 @@
   .step h4 { font-family:var(--fh); font-size:.95rem; font-weight:700; margin-bottom:.5rem; letter-spacing:-.01em; }
   .step p { font-size:.83rem; color:var(--muted); line-height:1.6; }
 
-  /* PRIZE */
-  #prize { background:var(--bg2); border-top:1px solid var(--line); }
-  .prize-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:2.5rem; }
-  .pc { background:var(--bg3); padding:2.2rem 1.8rem; transition:background .2s; position:relative; overflow:hidden; }
-  .pc:hover { background:var(--bg); }
-  .pc::after { content:''; position:absolute; bottom:0;left:0;right:0; height:1px; background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:0; transition:opacity .3s; }
-  .pc:hover::after { opacity:1; }
-  .pico { font-size:1.9rem; margin-bottom:1rem; }
-  .pc h3 { font-family:var(--fh); font-size:1.05rem; font-weight:700; margin-bottom:.7rem; letter-spacing:-.02em; }
-  .pc p { font-size:.85rem; color:var(--muted); line-height:1.7; }
-
   /* FOOTER */
   footer { background:var(--bg2); border-top:1px solid var(--line); padding:2.8rem 4rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.5rem; }
   .fl .logo { font-family:var(--fh); font-weight:800; font-size:1.15rem; letter-spacing:-.02em; margin-bottom:.35rem; }
@@ -326,9 +315,8 @@
     <a href="#download">Download</a>
     <a href="#apps">Apps</a>
     <a href="#mission">Mission</a>
-    <a href="#prize">Prize Case</a>
   </div>
-  <div class="nav-badge">Eigen Prize 2025</div>
+
 </nav>
 
 <!-- HERO -->
@@ -336,7 +324,7 @@
   <div class="hero-bg"></div>
   <div class="hero-grid"></div>
   <div class="hero-content fu">
-    <div class="eyebrow">Eigen Prize Submission · SANLABS 2025</div>
+    <div class="eyebrow">SANLABS</div>
     <h1 class="hero-title">
       The Complete<br>
       <span class="a">Learning OS</span><br>
@@ -347,7 +335,6 @@
     </p>
     <div class="hero-cta">
       <a href="#download" class="btn-p">Download sanHub</a>
-      <a href="#prize" class="btn-g">Why sanHub Wins</a>
     </div>
   </div>
   <div class="hero-visual">
@@ -459,16 +446,7 @@
   </div>
 
   <!-- Doc download strip -->
-  <div class="dl-doc-strip fu">
-    <div class="dl-doc-left">
-      <h4>📄 Eigen Prize Submission Document</h4>
-      <p>Full write-up: problem statement, architecture, app catalogue, build modes, impact case, and prize criteria — in the same format as the competition brief.</p>
-    </div>
-    <a href="sanHub_Eigen_Prize.docx" download class="btn-doc">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download .docx submission
-    </a>
-  </div>
+
 </section>
 
 <!-- APPS -->
@@ -541,25 +519,11 @@
   </div>
 </section>
 
-<!-- PRIZE CASE -->
-<section id="prize">
-  <div class="sec-eye">Eigen Prize Submission</div>
-  <h2 class="sec-title">Why sanHub<br>belongs on the podium</h2>
-  <p class="sec-sub">The Eigen Prize rewards solutions that are technically excellent, genuinely impactful, and built with real people in mind. sanHub delivers on all three — and it's already working.</p>
-  <div class="prize-grid">
-    <div class="pc fu"><div class="pico">🎯</div><h3>Solves a Real, Immediate Problem</h3><p>African schools lack reliable internet and consistent software environments. sanHub removes both barriers with a single offline-first executable. A complete solution, not a workaround.</p></div>
-    <div class="pc fu"><div class="pico">⚙️</div><h3>Technically Excellent</h3><p>Production-grade Flask lifecycle manager with dynamic process spawning, crash recovery, idle-timeout, and auto-discovery. 13 fully functional apps across 5 domains.</p></div>
-    <div class="pc fu"><div class="pico">📐</div><h3>Genuinely Innovative</h3><p>Packaging a full STEM learning OS — including TinyML pipelines and hardware deployment — as a single offline executable for education is a novel intersection no existing tool occupies.</p></div>
-    <div class="pc fu"><div class="pico">📈</div><h3>Measurably Scalable</h3><p>New apps need only a folder and a manifest.json. The platform grows at the speed of contributors. One deployment serves an entire school indefinitely at zero recurring cost.</p></div>
-    <div class="pc fu"><div class="pico">🌍</div><h3>Built for Africa's Reality</h3><p>Designed around the real constraints: intermittent internet, limited IT support, budget hardware. Not adapted after the fact — built offline-first from day one.</p></div>
-    <div class="pc fu"><div class="pico">🔗</div><h3>End-to-End, Not Piecemeal</h3><p>From first drag-and-drop block in Bloka to a trained model deployed to a microcontroller via Sanporter Studio — the full STEM-to-hardware pipeline in one tool. A student graduates through the whole stack without leaving the hub.</p></div>
-  </div>
-</section>
 
 <footer>
   <div class="fl">
     <div class="logo">san<span>Hub</span></div>
-    <p>SANLABS · Eigen Prize Submission · 2025</p>
+    <p>SANLABS</p>
   </div>
   <div class="fr">
     <strong>13 apps · 5 domains · 0 internet required</strong><br>
